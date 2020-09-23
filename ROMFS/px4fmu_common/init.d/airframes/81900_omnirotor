@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# @name OmniRotor
+#
+# @type Coaxial Helicopter
+# @class Copter
+#
+# @output MAIN1 motor 1
+# @output MAIN2 motor 2
+# @output MAIN3 motor 3
+# @output MAIN4 motor 4
+# @output MAIN5 feed-through of RC AUX1 channel
+# @output MAIN6 feed-through of RC AUX2 channel
+#
+# @output AUX1 feed-through of RC AUX1 channel
+# @output AUX2 feed-through of RC AUX2 channel
+# @output AUX3 feed-through of RC AUX3 channel
+# @output AUX4 feed-through of RC FLAPS channel
+#
+# @maintainer Lorenz Meier <lorenz@px4.io>
+#
+
+sh /etc/init.d/rc.mc_omni
+
+if [ $AUTOCNF = yes ]
+then
+	#Set data link loss failsafe mode (0: disabled)
+	param set NAV_DLL_ACT 0
+
+	# disable circuit breaker for airspeed sensor
+	param set CBRK_AIRSPD_CHK 162128
+
+	#param set CBRK_GPSFAIL 240024
+fi
+
+# mav type parameter of MAVLink. (0 Generic micro air vehicle)
+set MAV_TYPE 0
+param set MAV_TYPE ${MAV_TYPE}
+
+set MIXER uuv_x

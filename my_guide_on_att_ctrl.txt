@@ -1,0 +1,114 @@
+
+quick notes for tomorow:
+
+**The mixer seems to be obligatory. I seems that the actuator commands are fired by the mixer module/app/whatever (check!!!)
+
+**the uORB msg/topics are in Firmware/msg before build.
+after build some script/whatever copyes/modify it to /Firmware/build/px4_sitl_default/uORB/topics/
+
+**all information from all modules comes from messages trough subscription/publishing
+
+**the att ctrl module (as any other module) will probably never send a message or information directly to other module.
+what it does is publish it on a topic on uORB. then any other module can access it.
+Even though it is good for flexibility, it makes it hard to track the flow of information in a system.
+
+**you will probably have to check on the 'build' folder to look for the running and/or built modules and check
+which topics they publish and subscribe to. (is there no documentation for that??? - Apparently there is. look for uorb stuff)
+
+
+## 1 The flight stack or flight control diagram follows what is displaced at:
+ - https://dev.px4.io/master/en/concept/architecture.html#flight-stack
+
+#The thing that I was confuse the most is the flow of information, but it seems that the flow of information follows the diagram of the figure
+#After the attitude/rate controllers (the last called control block), its outputs are passed down to the mixer and them to the actuator drivers.
+#On the following, I will attempt to describe this two last blocks, mixer and actuator divers, stressing the flow of information as well.
+
+#*This is for the posix build (px4 sitl default)
+
+**- Mixer
+
+The mixer module, before build, is not together with the other modules. It is hidden on the lib folder, together with of other useful libraries.
+#after built located at: Firmware/build/px4_sitl_default/src/lib/ (notice it is also part of NuttX systems)
+#before built located at: Firmware/src/lib/
+- There are two folder related to mixer there:
+	mixer_module/
+	mixer/
+
+
+	- mixer_module
+	#It is the module that define the functions that handles everything related
+	#to actuation management, it is the interface between the controller's normalized outputs to the actuator drives.
+	#It is mainly composed of the class 'MixingOutput', which uses a simple template class for defining output modules, defined in the same file.
+	#However, on its header file, it includes mixer.h which is from the mixer/ folder.
+
+	#**For the simulation, the control commands are send as a mavlink message. This message takes its data directly from
+	#the actuator_outputs uORB topic/message. The mixer module contains the code for publishing this message.
+
+
+	- mixer
+	#The mixer folder contain piece of code/information you were looking for.
+	#It explains how the mixing is done on code level, and conceptally as well. (header file)
+	#
+	#On this mixer folder there is also the script that generates the .cpp mixer files. It is a python script,
+	#and it transforms the geometries 4+, 4x and so on into the proper mixing as you know it.
+		- px_generate_mixers.py
+	#especifically, it happens on its line 187 of the code, where the matrix pseldo-inverse is calculated.
+	#This matrix is then normalized after that the code goes on into creating the headers and source files for the mixer in c++
+
+
+##**However, it sems that there is no mixer module build. Instead, what is in the build folder is an executable called mixer.
+#I suspect that this is only to make it available the mixer commands. Furthermore, the mixer command only has the function to
+#load or append "mixer files to the ESC driver." It is further said that the driver must support the use of "ioctl's".
+#This leads me to beleave that the mixers ends up to being just a file used by the output drivers, and not an application itself.
+
+*****investigate how the output drivers work and how it uses ioctl and the mixers files*****
+
+## 2 Usage on simulation
+	#in short, the PWMSim driver calls upon the mixer, the mixer take the actuator_controls msgs,
+	#do the mixing and publishes actuator_outputs to uORB
+	- All internal communication is handled by uORB. The regular loop call hierarchy is as follows:
+		PWMSim::Run -> MixingOutput::update -> MixingOutput::setAndPublishActuatorOutputs -> publish to uORB
+
+	- The message in published to uORB is actuator_outputs, which is this case is pwm
+	- After that, the px4 simulator takes actuator_outputs msgs and send it to gazebo via mavlink
+
+#*#*#*#*# The best thing to see the flow of information is to see the doxygen documentation and graphs:
+
+https://px4.github.io/Firmware-Doxygen/index.html
+
+    --> Another alternative that may be more straitgh forward is to adapt the example controller at:
+   |           Firmware/src/examples/fixedwing_control/
+   |
+**The easiest way to customize the attitude controlles seems to be by altering the function:
+	MulticopterAttitudeControl::generate_attitude_setpoint(float dt, bool reset_yaw_sp)
+It seems to be the function that control the behaviour of the vehicle to control attitude.
+However so, the att ctrl does not publish the actuator_controls, which is the main input for the mixer module.
+Instead, it publishes vehicle_rates_setpoint, which is the input for mc_rate_control module.
+This makes the rate controller the last block in the information flow up to the mixer, for multicopters.
+
+The rate controller is the one who publishes actuator_controls.
+
+There is a interesting discussion about mixing on the forum:
+https://discuss.px4.io/t/mixer-customization-and-override/12098/5
+
+It seems to be recomended that you create your own mixing system:
+https://discuss.px4.io/t/mixer-customization-and-override/12098/8
+
+
+
+
+
+======**Useful debug commands**======
+
+**mavlink
+
+
+**uorb
+
+**??
+
+
+
+
+
+
