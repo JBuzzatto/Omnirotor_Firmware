@@ -1,93 +1,32 @@
-#####** This is a simple guide on the px4 system startup **#####
+#####** This is a simple guide on the px4 communication for fmu-v4 (pixracer) **#####
 
-The system startup is regulated by shell scripts.
-For NuttX (mainly the pixhawk series) they are located at:
-	Firmware/ROMFS/px4fmu_common/init.d/
-For Posix (linux boards as Pi and for sitl build) they are located at:
-	Firmware/ROMFS/px4fmu_common/init.d-posix/
+//== Notes on serial communication using mavlink msgs pixracer/opencm arduino ==//
 
-The first entry on the system startup is always the script 'rcS', for both NuttX and Posix.
-This rcS scripts then call on other scripts. For our interests, we will take a look at the default call hierarchy
-for a multicopter (mc) vehicle type.
+1. communication is done through a wired serial ports.
+	- we use the same DEBUG_VECT msg to send and receive current and desired dynamixels positions
+		- this msg has 3 float values (x, y and z). z is used to identify the msg (differentiate from desired to current position)
+			- desired position msg has z = 1. It is sent from px4 to arduino.
+			- current position msg has z = 2. It is sent from arduino to px4.
 
-## 1.1 (posix) Startup scripts call hierarchy for default mc:
+2. on the arduino side, it is only mavlink communication, using the DEBUG_VECT mavlink msg.
+	- It runs as fast as it can on the loop part.
+	- on the opencm, we use the Serial2 instance, already implemented
 
-	- rcS
-	#after built located at: Firmware/build/px4_sitl_default/tmp/rootfs/etc/init.d-posix/
-	#before built located at: Firmware/ROMFS/px4fmu_common/init.d-posix/
-	#this script is run by the main px4 instance (an executable called px4, that can be found
-	#at 'Firmware/build/px4_sitl_default/bin/' after your have built for that target)
-	#First thing it does is to run the bash 'px4-alias.sh'. After that, it sets several default system
-	#parameters that can be changed afterwords by other scripts.
-	#It then runs the script 'sitl_run.sh'
-	#It then runs two more scrtipts: rc.vehicle_setup and rc.logging
+3. on the px4 part, it associates the "DEBUG_VECT" mavlink msg with the "debug_vect" uORB msg.
+	- Publishing desired position on debug_vect msg inside the mc_rate_control, we get around 800 Hz
 
-		- px4-alias.sh
-		#after built located at: Firmware/build/px4_sitl_default/bin/ (created)
-		#before built located at: Firmware/platforms/posix/src/common/ (template it seems)
-		#this script just set the 'px4-' prefix keyword to run the other px4 modules and
-		#apps (both also exectables after the system is built)
-
-		- sitl_run.sh
-		#after built located at: *not placed at build folder*
-		#before built located at: Firmware/Tools/
-		#Not going into detail, what it does is it sets the simulator (gazebo for us) and select your model
-		#It also probably tells to run your config script for your system, that you must create (check it!!!!)
-
-			- my_model
-			#
-			#
-
-		- rc.vehicle_setup
-		#after built located at: Firmware/build/px4_sitl_default/tmp/rootfs/etc/init.d/ (notice it is also part of NuttX systems)
-		#before built located at: Firmware/ROMFS/px4fmu_common/init.d/  (notice it is also part of NuttX systems)
-		#First it acess the vehicle type from system parameter 'VEHICLE_TYPE'. On our case it is mc
-		#After it sets mav type from system parameter 'MAV_TYPE' or by looking at the mixer used
-		#Then it also runs two more scripts: rc.interface and rc.mc_apps
-
-			- rc.interface
-			#after built located at: Firmware/build/px4_sitl_default/tmp/rootfs/etc/init.d/ (notice it is also part of NuttX systems)
-			#before built located at: Firmware/ROMFS/px4fmu_common/init.d/
-			#This script configures control interfaces. It sets several io related system parameters.
-			#if the system parameter 'OUTPUT_MODE' is set to 'io' or 'uavcan_esc' or 'IO_PRESENT' is 'yes', then it
-			#also runs the 'rc.io' script.
-			#It is also responsible for loading the main and aux mixer. If you want to skip it, the system parameter
-			# 'MIXER' can be set equal to 'skip'
-
-				- rc.io
-				#after built located at: Firmware/build/px4_sitl_default/tmp/rootfs/etc/init.d/ (notice it is also part of NuttX systems)
-				#before built located at: Firmware/ROMFS/px4fmu_common/init.d/
-				#does not do much. if you are on hil, it blocks control outputs. if you are not, it sets the output frequence
-				#and allow midair recovery.
-
-			- rc.mc_apps
-			#after built located at: Firmware/build/px4_sitl_default/tmp/rootfs/etc/init.d/ (notice it is also part of NuttX systems)
-			#before built located at: Firmware/ROMFS/px4fmu_common/init.d/
-			#All it does is select the estimation method (standart is ekf2) and starts it. Then it starts more apps.
-			#The apps it starts are:
-				* ekf2
-				* mc_rate_control
-				* mc_att_control
-				* mc_pos_control
-				* land_detector (multicopter)
-
-
-		- rc.logging
-		# (complete it...)
-		# Creates flight log...
-
-
-
-
-## 1.2 (NuttX) Startup scripts call hierarchy for default mc:
-
-	- rcS
-	#after built located at: Firmware/build/px4_sitl_default/tmp/rootfs/etc/init.d-posix/
-	#before built located at: Firmware/ROMFS/px4fmu_common/init.d-posix/
-	#First thing to notice is that this file for NuttX is much bigger than the one for posix
-	#this script is run by the main px4 instance (an executable called px4, that can be found
-	#at 'Firmware/build/px4_sitl_default/bin/' after you have built for that target)
-
+	- The mavlink msg, however, is more complicated, being regulated by several parameters and settings:
+		- You can have multiple mavlink instances on px4.
+			- Each instance is associated with ONE serial device or network port.
+			- The speed of operation of the serial divice can be set by a parameter. Example: SER_TEL1_BAUD, where you specify the baud rate
+			- Each instance's port is specified by the value of the parameter MAV_#_CONFIG, where # is the number of the instance
+			- Each instance/serial device has a number of streams associeted with it.
+				- Each stream is composed of a msg type and its operating rate
+			- Each instance can have a mode associeted with it.
+			- Each instance's mode is specified by the value of the parameter MAV_#_MODE, where # is the number of the instance
+				- A mode specifies the set of enabled streams and theirs rates
+				- mode types are defined on Firmware/src/modules/mavlink/mavlink_main.cpp
+			- By default, on pixracer, MAV_0 (the mavlink insance zero), is set on the wifi module
 
 
 
