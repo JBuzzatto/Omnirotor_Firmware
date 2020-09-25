@@ -472,8 +472,8 @@ Vector3f MulticopterRateControl::rotor_IK_no_sing(Vector3f T_d_)
 	float theta_core = atan2(atan2y, atan2x);
 
 	Vector3f u_out;
-	u_out(0) = theta_fork + (float)dyxl_pos1;
-	u_out(1) = theta_core + (float)dyxl_pos2;
+	u_out(0) = theta_fork;// + (float)dyxl_pos1;
+	u_out(1) = theta_core;// + (float)dyxl_pos2;
 	u_out(2) = 1; //my convention to id this msg on mavlink comm
 
 	return u_out;

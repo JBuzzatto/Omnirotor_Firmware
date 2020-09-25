@@ -29,12 +29,23 @@ then
 
 	# disable circuit breaker for airspeed sensor
 	param set CBRK_AIRSPD_CHK 162128
+	# disable circuit breaker for io safety
+	param set CBRK_IO_SAFETY 22027
 
-	#param set CBRK_GPSFAIL 240024
+	param set CBRK_GPSFAIL 240024
+
+	param set SER_TEL1_BAUD 115200
+	#set to TELEM 1 = 101
+	param set MAV_0_CONFIG 101
+	#set to custom = 1
+	param set MAV_0_MODE 1
+	param set MAV_0_RATE 24000
+
 fi
 
 # mav type parameter of MAVLink. (0 Generic micro air vehicle)
-set MAV_TYPE 0
+set MAV_TYPE 3
 param set MAV_TYPE ${MAV_TYPE}
 
-set MIXER uuv_x
+set MIXER omni
+set PWM_OUT 12
