@@ -40,6 +40,8 @@ then
 	#set to custom = 1
 	param set MAV_0_MODE 1
 	param set MAV_0_RATE 24000
+	#disable mag0 that is problematic on pixracer
+	param set CAL_MAG0_EN 0
 
 fi
 
@@ -47,5 +49,11 @@ fi
 set MAV_TYPE 3
 param set MAV_TYPE ${MAV_TYPE}
 
+# This is the gimbal pass mixer
+set MIXER_AUX pass
+
+# use PWM parameters for throttle channel
+set PWM_AUX_OUT 1234
+set PWM_OUT 23
+
 set MIXER omni
-set PWM_OUT 12
