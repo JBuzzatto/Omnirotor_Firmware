@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# @name OmniRotor
+#
+# @type Generic Quadcopter
+# @class Copter
+#
+# @output MAIN1 motor 1
+# @output MAIN2 motor 2
+# @output MAIN5 feed-through of RC AUX1 channel
+# @output MAIN6 feed-through of RC AUX2 channel
+#
+# @output AUX1 feed-through of RC AUX1 channel
+# @output AUX2 feed-through of RC AUX2 channel
+# @output AUX3 feed-through of RC AUX3 channel
+# @output AUX4 feed-through of RC FLAPS channel
+#
+# @maintainer joao <joao@asdf.uoa>
+#
+
+sh /etc/init.d/rc.mc_defaults
+
+if [ $AUTOCNF = yes ]
+then
+	#Set data link loss failsafe mode (0: disabled)
+	param set NAV_DLL_ACT 0
+
+	# disable circuit breaker for airspeed sensor
+	param set CBRK_AIRSPD_CHK 162128
+	# disable circuit breaker for io safety
+	param set CBRK_IO_SAFETY 22027
+	# disable circuit breaker for power supply
+	param set CBRK_SUPPLY_CHK 894281
+
+	param set CBRK_GPSFAIL 240024
+
+	param set SER_TEL1_BAUD 115200
+	#set to TELEM 1 = 101
+	param set MAV_0_CONFIG 101
+	#set to custom = 1
+	param set MAV_0_MODE 1
+	param set MAV_0_RATE 24000
+	#disable mag0 that is problematic on pixracer
+	# param set CAL_MAG0_EN 0
+
+fi
+
+# mav type parameter of MAVLink. (0 Generic micro air vehicle, 2: Quadrotor, 3: Coaxial helicopter)
+# set MAV_TYPE 2
+# param set MAV_TYPE ${MAV_TYPE}
+
+# This is the gimbal pass mixer
+set MIXER_AUX pass
+
+# use PWM parameters for throttle channel
+set PWM_AUX_OUT 1234
+set PWM_OUT 23
+
+set MIXER omni
