@@ -106,6 +106,9 @@ MulticopterRateControl::parameters_updated()
 				  radians(_param_mc_acro_y_max.get()));
 
 	_actuators_0_circuit_breaker_enabled = circuit_breaker_enabled_by_val(_param_cbrk_rate_ctrl.get(), CBRK_RATE_CTRL_KEY);
+
+	//set filter parameters
+	pos_fork_filter.setParameters(0.04, 0.1);
 }
 
 float
@@ -259,7 +262,7 @@ MulticopterRateControl::Run()
 		//============== here starts your main code/loop ===================//
 		//=== check your subscription here
 		//get update on dynamixels' position
-		//update_dynxl_pos();
+		update_dynxl_pos();
 		// run the rate controller
 		if (_v_control_mode.flag_control_rates_enabled && !_actuators_0_circuit_breaker_enabled) {
 
@@ -447,6 +450,8 @@ Vector3f MulticopterRateControl::rotor_IK_no_sing(Vector3f T_d_)
 	float atany = -atany_(0,0);
 	float atanx = atanx_(0,0);
 	float theta_fork = atan(atany/atanx);
+	//pos_fork_filter.update(theta_fork);
+	//theta_fork = pos_fork_filter.getState();
 	// float theta_fork = (theta_fork_(0,0));
 	//== calculate the fork END ==//
 
@@ -460,7 +465,7 @@ Vector3f MulticopterRateControl::rotor_IK_no_sing(Vector3f T_d_)
 	Eulerf euler_forkc(0.0, 0.0, theta_fork); //euler angles
 	Dcmf R_forkc(euler_forkc); //creates the rotation matrix from euler angles
 	//Express the desired direction w.r.t the parent frame (child frame??)
-  	Vector3f T_d_on_core = fork_R_core.T()*R_forkc.T()*T_d_norm;
+  	Vector3f T_d_on_core = fork_R_core.T()*R_fork.T()*T_d_norm;
 	//Project the desired force onto the working plane of the joint (yz plane of the fork)
 	Vector3f T_d_on_core_yz = T_d_on_core;
 	T_d_on_core_yz(0) = 0;
@@ -476,7 +481,7 @@ Vector3f MulticopterRateControl::rotor_IK_no_sing(Vector3f T_d_)
 	float theta_core = atan2(atan2y, atan2x);
 
 	Vector3f u_out;
-	u_out(0) = theta_fork;// + (float)dyxl_pos1;
+	u_out(0) = theta_fork + (float)dyxl_pos1;
 	// dyxl_pos1 = theta_fork;
 	u_out(1) = theta_core;// + (float)dyxl_pos2;
 	// dyxl_pos2 = theta_core;

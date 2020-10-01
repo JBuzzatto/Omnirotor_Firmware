@@ -65,6 +65,8 @@
 #include <uORB/topics/debug_value.h>
 #include <uORB/topics/debug_vect.h>
 #include <uORB/topics/debug_array.h>
+#include <lib/ecl/AlphaFilter/AlphaFilter.hpp>
+
 //========== omnirotor includes END ===========//
 
 class MulticopterRateControl : public ModuleBase<MulticopterRateControl>, public ModuleParams, public px4::WorkItem
@@ -135,6 +137,7 @@ private:
 	double dyxl_pos2 = 0;
 	double dyxl_pos1_d = 0;
 	double dyxl_pos2_d = 0;
+	AlphaFilter<float> pos_fork_filter{};
 	//========== omnirotor uORB msg structures END ===============//
 	//========== omnirotor functions ===================//
 	void update_dynxl_pos();
