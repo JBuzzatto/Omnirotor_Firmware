@@ -61,12 +61,12 @@
 #include <uORB/topics/vehicle_status.h>
 
 //========== omnirotor includes ===============//
+#include <uORB/topics/rc_channels.h>
 #include <uORB/topics/debug_key_value.h>
 #include <uORB/topics/debug_value.h>
 #include <uORB/topics/debug_vect.h>
 #include <uORB/topics/debug_array.h>
 #include <lib/ecl/AlphaFilter/AlphaFilter.hpp>
-
 //========== omnirotor includes END ===========//
 
 class MulticopterRateControl : public ModuleBase<MulticopterRateControl>, public ModuleParams, public px4::WorkItem
@@ -114,6 +114,7 @@ private:
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 	//========== omnirotor subscriptions ===================//
 	uORB::Subscription _debug_vect_sub{ORB_ID(debug_vect)};
+	uORB::Subscription _rc_channels_sub{ORB_ID(rc_channels)};
 	//========== omnirotor subscriptions END ===============//
 
 	uORB::SubscriptionCallbackWorkItem _vehicle_angular_velocity_sub{this, ORB_ID(vehicle_angular_velocity)};
@@ -138,11 +139,14 @@ private:
 	double dyxl_pos1_d = 0;
 	double dyxl_pos2_d = 0;
 	AlphaFilter<float> pos_fork_filter{};
+	rc_channels_s			_rc_channels{};
 	//========== omnirotor uORB msg structures END ===============//
 	//========== omnirotor functions ===================//
 	void update_dynxl_pos();
 	matrix::Vector3f torque_CG_map_inv(matrix::Vector3f Ce_ang_);
 	matrix::Vector3f rotor_IK_no_sing(matrix::Vector3f T_d_);
+	void inverted_ctrl(matrix::Vector3f att_control_);
+	void hanging_ctrl(matrix::Vector3f att_control_);
 	//========== omnirotor functions END ===============//
 
 

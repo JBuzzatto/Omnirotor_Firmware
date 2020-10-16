@@ -263,6 +263,12 @@ MulticopterRateControl::Run()
 		//=== check your subscription here
 		//get update on dynamixels' position
 		update_dynxl_pos();
+
+		//read the rc channels you need
+		_rc_channels_sub.update(&_rc_channels);
+		//put channel 8 value into debug vector
+		//_dynxls_d.x = _rc_channels.channels[5];
+
 		// run the rate controller
 		if (_v_control_mode.flag_control_rates_enabled && !_actuators_0_circuit_breaker_enabled) {
 
@@ -284,31 +290,21 @@ MulticopterRateControl::Run()
 			}
 
 			// run rate controller
-			const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
+			// const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
+			Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 
-			//Do here the mapping to a desired thrust
-			Vector3f T_dtal;
-			T_dtal = torque_CG_map_inv(att_control);
-			//Add the thrust on z direction
-			T_dtal(2) = T_dtal(2) - _thrust_sp - 10;
+			if (_rc_channels.channels[5] < (float)-0.5)
+			{
+				att_control(2) = 0; //ignore yaw
+				inverted_ctrl(att_control);
+			}
+			else if (_rc_channels.channels[5] > (float)-0.1 && _rc_channels.channels[5] < (float)0.1)
+			{
+				att_control(1) = 0; //ignore pitch
+				hanging_ctrl(att_control);
+			}
 
-			//Do the IK for the rotor
-			Vector3f u;
-			u = rotor_IK_no_sing(T_dtal);
 
-			_dynxls_d.x = u(0);
-			_dynxls_d.y = u(1);
-			_dynxls_d.z = u(2);
-			_dynxls_d.timestamp = hrt_absolute_time();
-			//publish for debug
-			_debug_vect_pub.publish(_dynxls_d);
-
-			// _dynxls_d.x = T_dtal(0);
-			// _dynxls_d.y = T_dtal(1);
-			// _dynxls_d.z = T_dtal(2);
-			// _dynxls_d.timestamp = hrt_absolute_time();
-			// //publish for debug
-			// _debug_vect_pub.publish(_dynxls_d);
 
 			// publish rate controller status
 			rate_ctrl_status_s rate_ctrl_status{};
@@ -488,6 +484,67 @@ Vector3f MulticopterRateControl::rotor_IK_no_sing(Vector3f T_d_)
 	u_out(2) = 1; //my convention to id this msg on mavlink comm
 
 	return u_out;
+}
+
+void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
+{
+	//Do here the mapping to a desired thrust
+	Vector3f T_dtal;
+	T_dtal = torque_CG_map_inv(att_control_);
+	//Add the thrust on z direction
+	T_dtal(2) = T_dtal(2) - _thrust_sp - 10;
+
+	//Do the IK for the rotor
+	Vector3f u;
+	u = rotor_IK_no_sing(T_dtal);
+
+	// _dynxls_d.x = u(0);
+	// _dynxls_d.x = 0; //for tunning of one axis
+	// _dynxls_d.y = u(1);
+	// _dynxls_d.z = u(2);
+	_dynxls_d.timestamp = hrt_absolute_time();
+	_debug_vect_pub.publish(_dynxls_d);
+
+	//publish only if armed
+	if (_v_control_mode.flag_armed)
+	{
+		// _dynxls_d.x = u(0);
+		_dynxls_d.x = 0; //for tunning of one axis
+		_dynxls_d.y = u(1);
+		_dynxls_d.z = u(2);
+		_dynxls_d.timestamp = hrt_absolute_time();
+		_debug_vect_pub.publish(_dynxls_d);
+	}
+	else
+	{
+		_dynxls_d.x = 0;
+		_dynxls_d.y = 0;
+		_dynxls_d.z = u(2);
+		_dynxls_d.timestamp = hrt_absolute_time();
+		_debug_vect_pub.publish(_dynxls_d);
+	}
+}
+
+void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
+{
+	float pi = 3.1415;
+	//publish only if armed
+	if (_v_control_mode.flag_armed)
+	{
+		_dynxls_d.x = 0; //set fork joint to 90 deg
+		_dynxls_d.y = -att_control_(0)*(pi/6) + pi;
+		_dynxls_d.z = 1; //my convention to id this msg on mavlink comm
+		_dynxls_d.timestamp = hrt_absolute_time();
+		_debug_vect_pub.publish(_dynxls_d);
+	}
+	else
+	{
+		_dynxls_d.x = 0;
+		_dynxls_d.y = 0;
+		_dynxls_d.z = 1; //my convention to id this msg on mavlink comm
+		_dynxls_d.timestamp = hrt_absolute_time();
+		_debug_vect_pub.publish(_dynxls_d);
+	}
 }
 
 int MulticopterRateControl::print_usage(const char *reason)

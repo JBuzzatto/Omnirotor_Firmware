@@ -72,7 +72,7 @@ px4_add_board(
 		local_position_estimator
 		logger
 		mavlink
-		mc_att_control
+		# mc_att_control
 		mc_hover_thrust_estimator
 		mc_pos_control
 		#mc_rate_control
@@ -88,6 +88,7 @@ px4_add_board(
 		vtol_att_control
 		#**add my modified modules
 		mc_rate_control_omni #to build this you need to comment out the original "mc_rate_control"
+		mc_att_control_omni	#to build this you need to comment out the original "mc_att_control"
 	SYSTEMCMDS
 		bl_update
 		#dmesg

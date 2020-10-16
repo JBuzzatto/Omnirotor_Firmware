@@ -43,6 +43,10 @@ then
 	#disable mag0 that is problematic on pixracer
 	# param set CAL_MAG0_EN 0
 
+	#disable circuit breakers for roll and pitch detectors
+	param set FD_FAIL_P 0
+	param set FD_FAIL_R 0
+
 fi
 
 # mav type parameter of MAVLink. (0 Generic micro air vehicle, 2: Quadrotor, 3: Coaxial helicopter)
@@ -56,4 +60,5 @@ set MIXER_AUX pass
 set PWM_AUX_OUT 1234
 set PWM_OUT 23
 
-set MIXER omni
+# set MIXER omni
+set MIXER omni_coax

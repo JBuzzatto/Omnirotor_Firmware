@@ -57,7 +57,8 @@ mc_rate_control_omni start
 #
 # Start Multicopter Attitude Controller.
 #
-mc_att_control start
+# mc_att_control start
+mc_att_control_omni start
 
 #
 # Start Multicopter Position Controller.
