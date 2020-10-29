@@ -66,13 +66,13 @@ px4_add_board(
 		events
 		fw_att_control
 		fw_pos_control_l1
-		land_detector
+		# land_detector
 		landing_target_estimator
 		load_mon
 		local_position_estimator
 		logger
 		mavlink
-		# mc_att_control
+		mc_att_control
 		mc_hover_thrust_estimator
 		mc_pos_control
 		#mc_rate_control
@@ -85,10 +85,10 @@ px4_add_board(
 		temperature_compensation
 		uuv_att_control
 		vmount
-		vtol_att_control
+		# vtol_att_control
 		#**add my modified modules
 		mc_rate_control_omni #to build this you need to comment out the original "mc_rate_control"
-		mc_att_control_omni	#to build this you need to comment out the original "mc_att_control"
+		# mc_att_control_omni	#to build this you need to comment out the original "mc_att_control"
 	SYSTEMCMDS
 		bl_update
 		#dmesg

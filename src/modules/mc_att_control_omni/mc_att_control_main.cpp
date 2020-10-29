@@ -274,7 +274,7 @@ MulticopterAttitudeControl::Run()
 				Quatf q_r(Eulerf(3.1415,0,0));
 				_attitude_control.setAttitudeSetpoint(q_dummy*q_r, vehicle_attitude_setpoint.yaw_sp_move_rate);
 				_thrust_setpoint_body = Vector3f(vehicle_attitude_setpoint.thrust_body);
-				_thrust_setpoint_body = -_thrust_setpoint_body;
+				// _thrust_setpoint_body = -_thrust_setpoint_body;
 				//_debug_v.y = 1;
 			}
 			// _attitude_control.setAttitudeSetpoint(Quatf(vehicle_attitude_setpoint.q_d), vehicle_attitude_setpoint.yaw_sp_move_rate);

@@ -46,6 +46,20 @@ then
 	#disable circuit breakers for roll and pitch detectors
 	param set FD_FAIL_P 0
 	param set FD_FAIL_R 0
+	param set COM_DISARM_LAND 0
+	param set COM_DISARM_PRFLT 0
+
+	#set offboard parameters
+	param set EKF2_AID_MASK 24
+	param set EKF2_HGT_MODE 3
+
+	param set PWM_AUX_RATE 50
+	param set PWM_AUX_MIN 1100
+	param set PWM_AUX_MAX 1900
+
+
+
+
 
 fi
 
@@ -57,8 +71,9 @@ fi
 set MIXER_AUX pass
 
 # use PWM parameters for throttle channel
-set PWM_AUX_OUT 1234
+set PWM_AUX_OUT 45
 set PWM_OUT 23
 
 # set MIXER omni
-set MIXER omni_coax
+set MIXER omni_flap
+# set MIXER omni_coax

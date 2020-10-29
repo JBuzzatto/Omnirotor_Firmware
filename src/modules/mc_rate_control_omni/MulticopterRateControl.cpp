@@ -295,12 +295,13 @@ MulticopterRateControl::Run()
 
 			if (_rc_channels.channels[5] < (float)-0.5)
 			{
-				att_control(2) = 0; //ignore yaw
+				// att_control(2) = 0; //ignore yaw
 				inverted_ctrl(att_control);
 			}
 			else if (_rc_channels.channels[5] > (float)-0.1 && _rc_channels.channels[5] < (float)0.1)
 			{
 				att_control(1) = 0; //ignore pitch
+				att_control(2) = -att_control(2); //invert yaw
 				hanging_ctrl(att_control);
 			}
 
@@ -492,7 +493,7 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	Vector3f T_dtal;
 	T_dtal = torque_CG_map_inv(att_control_);
 	//Add the thrust on z direction
-	T_dtal(2) = T_dtal(2) - _thrust_sp - 10;
+	T_dtal(2) = T_dtal(2) - _thrust_sp - 17;
 
 	//Do the IK for the rotor
 	Vector3f u;
@@ -508,7 +509,7 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	//publish only if armed
 	if (_v_control_mode.flag_armed)
 	{
-		// _dynxls_d.x = u(0);
+		_dynxls_d.x = u(0);
 		_dynxls_d.x = 0; //for tunning of one axis
 		_dynxls_d.y = u(1);
 		_dynxls_d.z = u(2);
@@ -519,6 +520,8 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	{
 		_dynxls_d.x = 0;
 		_dynxls_d.y = 0;
+		// _dynxls_d.x = u(0);
+		// _dynxls_d.y = u(1);
 		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();
 		_debug_vect_pub.publish(_dynxls_d);
@@ -531,8 +534,8 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	//publish only if armed
 	if (_v_control_mode.flag_armed)
 	{
-		_dynxls_d.x = 0; //set fork joint to 90 deg
-		_dynxls_d.y = -att_control_(0)*(pi/6) + pi;
+		_dynxls_d.x = 0; //set fork joint to 0 deg
+		_dynxls_d.y = att_control_(0)*(pi/6) + pi;
 		_dynxls_d.z = 1; //my convention to id this msg on mavlink comm
 		_dynxls_d.timestamp = hrt_absolute_time();
 		_debug_vect_pub.publish(_dynxls_d);
@@ -540,7 +543,8 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	else
 	{
 		_dynxls_d.x = 0;
-		_dynxls_d.y = 0;
+		_dynxls_d.y = pi;
+		//_dynxls_d.y = 0;
 		_dynxls_d.z = 1; //my convention to id this msg on mavlink comm
 		_dynxls_d.timestamp = hrt_absolute_time();
 		_debug_vect_pub.publish(_dynxls_d);

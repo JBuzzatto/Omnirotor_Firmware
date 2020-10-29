@@ -1,0 +1,29 @@
+Coaxial OmniRotor mixer
+- One motor per rotor.
+===========================
+
+Z:
+
+Upper rotor (CCW)
+-------------
+M: 1
+S: 0 3      0  20000 -10000 -10000  10000
+
+Lower rotor (CW)
+-------------
+M: 1
+S: 0 3      0  20000 -10000 -10000  10000
+
+Mixing between yaw and pitch
+Left servo
+-------------
+M: 2
+S: 0 1  10000  10000      0 -10000  10000
+S: 0 2  10000  10000 0 -10000  10000
+
+Mixing between yaw and pitch
+Left servo
+-------------
+M: 2
+S: 0 1  -10000  -10000      0 -10000  10000
+S: 0 2  10000  10000 0 -10000  10000
