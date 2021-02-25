@@ -5,13 +5,17 @@ Coaxial OmniRotor mixer
 Z:
 
 Upper rotor (CCW)
+Mixing between yaw and thrust
 -------------
-M: 1
+M: 2
+S: 0 2  10000  10000      0 -10000  10000
 S: 0 3      0  20000 -10000 -10000  10000
 
 Lower rotor (CW)
+Mixing between yaw and thrust
 -------------
-M: 1
+M: 2
+S: 0 2  -10000  -10000      0 -10000  10000
 S: 0 3      0  20000 -10000 -10000  10000
 
 Mixing between yaw and pitch
