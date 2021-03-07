@@ -152,4 +152,6 @@ px4_add_romfs_files(
 	# [60000, 61000] (Unmanned) Underwater Robots
 	60000_uuv_generic
 	60001_uuv_hippocampus
+
+	81900_omnirotor
 )
