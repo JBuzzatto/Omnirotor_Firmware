@@ -1,0 +1,33 @@
+#####** This is a simple guide on the px4 communication for fmu-v4 (pixracer) **#####
+
+//== Notes on serial communication using mavlink msgs pixracer/opencm arduino ==//
+
+1. communication is done through a wired serial ports.
+	- we use the same DEBUG_VECT msg to send and receive current and desired dynamixels positions
+		- this msg has 3 float values (x, y and z). z is used to identify the msg (differentiate from desired to current position)
+			- desired position msg has z = 1. It is sent from px4 to arduino.
+			- current position msg has z = 2. It is sent from arduino to px4.
+
+2. on the arduino side, it is only mavlink communication, using the DEBUG_VECT mavlink msg.
+	- It runs as fast as it can on the loop part.
+	- on the opencm, we use the Serial2 instance, already implemented
+
+3. on the px4 part, it associates the "DEBUG_VECT" mavlink msg with the "debug_vect" uORB msg.
+	- Publishing desired position on debug_vect msg inside the mc_rate_control, we get around 800 Hz
+
+	- The mavlink msg, however, is more complicated, being regulated by several parameters and settings:
+		- You can have multiple mavlink instances on px4.
+			- Each instance is associated with ONE serial device or network port.
+			- The speed of operation of the serial divice can be set by a parameter. Example: SER_TEL1_BAUD, where you specify the baud rate
+			- Each instance's port is specified by the value of the parameter MAV_#_CONFIG, where # is the number of the instance
+			- Each instance/serial device has a number of streams associeted with it.
+				- Each stream is composed of a msg type and its operating rate
+			- Each instance can have a mode associeted with it.
+			- Each instance's mode is specified by the value of the parameter MAV_#_MODE, where # is the number of the instance
+				- A mode specifies the set of enabled streams and theirs rates
+				- mode types are defined on Firmware/src/modules/mavlink/mavlink_main.cpp
+			- By default, on pixracer, MAV_0 (the mavlink insance zero), is set on the wifi module
+
+
+
+
