@@ -54,14 +54,16 @@ then
 	param set EKF2_HGT_MODE 3
 
 	param set PWM_AUX_RATE 50
-	param set PWM_AUX_MIN 1100
-	param set PWM_AUX_MAX 1900
-
-
-
-
+	# param set PWM_AUX_MIN 1100
+	# param set PWM_AUX_MAX 1950
+	# # set offset for pwm of flaps
+	# param set PWM_AUX_TRIM4 0.1
+	# param set PWM_AUX_TRIM5 0.1
 
 fi
+
+#Set parameters on this file for omnirotor
+sh /etc/init.d/rc.omni_options
 
 # mav type parameter of MAVLink. (0 Generic micro air vehicle, 2: Quadrotor, 3: Coaxial helicopter)
 # set MAV_TYPE 2
@@ -75,5 +77,6 @@ set PWM_AUX_OUT 45
 set PWM_OUT 23
 
 # set MIXER omni
-set MIXER omni_flap
+# set MIXER omni_flap
 # set MIXER omni_coax
+set MIXER omni_flap_even
