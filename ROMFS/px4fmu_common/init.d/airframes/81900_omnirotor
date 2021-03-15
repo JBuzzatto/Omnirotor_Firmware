@@ -79,4 +79,4 @@ set PWM_OUT 23
 # set MIXER omni
 # set MIXER omni_flap
 # set MIXER omni_coax
-set MIXER omni_flap_even
+set MIXER omni_flap_even_mm
