@@ -480,7 +480,7 @@ Vector3f MulticopterRateControl::rotor_IK_no_sing(Vector3f T_d_)
 	Vector3f u_out;
 	u_out(0) = theta_fork + (float)dyxl_pos1;
 	// dyxl_pos1 = theta_fork;
-	u_out(1) = theta_core;// + (float)dyxl_pos2;
+	u_out(1) = -theta_core;// + (float)dyxl_pos2;
 	// dyxl_pos2 = theta_core;
 	u_out(2) = 1; //my convention to id this msg on mavlink comm
 
@@ -543,7 +543,7 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	else
 	{
 		_dynxls_d.x = 0;
-		_dynxls_d.y = pi;
+		_dynxls_d.y = 0;
 		//_dynxls_d.y = 0;
 		_dynxls_d.z = 1; //my convention to id this msg on mavlink comm
 		_dynxls_d.timestamp = hrt_absolute_time();
