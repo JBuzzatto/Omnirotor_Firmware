@@ -300,7 +300,7 @@ MulticopterRateControl::Run()
 			}
 			else if (_rc_channels.channels[5] > (float)-0.1 && _rc_channels.channels[5] < (float)0.1)
 			{
-				att_control(1) = 0; //ignore pitch
+				// att_control(1) = 0; //ignore pitch
 				att_control(2) = -att_control(2); //invert yaw
 				hanging_ctrl(att_control);
 			}
@@ -499,18 +499,14 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	Vector3f u;
 	u = rotor_IK_no_sing(T_dtal);
 
-	// _dynxls_d.x = u(0);
-	// _dynxls_d.x = 0; //for tunning of one axis
-	// _dynxls_d.y = u(1);
-	// _dynxls_d.z = u(2);
-	_dynxls_d.timestamp = hrt_absolute_time();
-	_debug_vect_pub.publish(_dynxls_d);
+	// _dynxls_d.timestamp = hrt_absolute_time();
+	// _debug_vect_pub.publish(_dynxls_d);
 
 	//publish only if armed
 	if (_v_control_mode.flag_armed)
 	{
 		_dynxls_d.x = u(0);
-		_dynxls_d.x = 0; //for tunning of one axis
+		_dynxls_d.x = 0; //for not using the fork dof
 		_dynxls_d.y = u(1);
 		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();

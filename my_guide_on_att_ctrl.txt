@@ -75,6 +75,8 @@ The mixer module, before build, is not together with the other modules. It is hi
 #*#*#*#*# The best thing to see the flow of information is to see the doxygen documentation and graphs:
 
 https://px4.github.io/Firmware-Doxygen/index.html
+https://dev.px4.io/v1.10_noredirect/en/middleware/uorb_graph.html
+
 
     --> Another alternative that may be more straitgh forward is to adapt the example controller at:
    |           Firmware/src/examples/fixedwing_control/
@@ -108,7 +110,8 @@ https://discuss.px4.io/t/mixer-customization-and-override/12098/8
 **??
 
 
-
+git token:
+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
 
 
 

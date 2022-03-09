@@ -10,15 +10,19 @@
 if [ $AUTOCNF = yes ]
 then
 
-	# param set PWM_MAX 1950
+	# param set PWM_MAX 2100
 	# param set PWM_MIN 1075
-	param set PWM_RATE 50
+	# param set PWM_RATE 50
 
 
 fi
 
-param set PWM_AUX_MIN 1100
-param set PWM_AUX_MAX 1950
+param set PWM_AUX_MIN 1075
+param set PWM_AUX_MAX 2100
 # set offset for pwm of flaps
 param set PWM_AUX_TRIM4 0
 param set PWM_AUX_TRIM5 0
+
+param set PWM_MAX 2100
+param set PWM_MIN 1075
+param set PWM_RATE 50
