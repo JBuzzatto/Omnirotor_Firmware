@@ -91,8 +91,8 @@ px4_add_board(
 		vmount
 		vtol_att_control
 		#**add my modified modules
-		mc_rate_control_omni #to build this you need to comment out the original "mc_rate_control"
-		# mc_att_control_omni	#to build this you need to comment out the original "mc_att_control"
+		mc_rate_control_omni #to build this you need to comment out the original "mc_rate_control". Also change accordingly rc.mc_apps file.
+		# mc_att_control_omni	#to build this you need to comment out the original "mc_att_control". Also change accordingly rc.mc_apps file.
 	SYSTEMCMDS
 		bl_update
 		dmesg
