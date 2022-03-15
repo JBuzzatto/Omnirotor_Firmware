@@ -19,6 +19,10 @@ fi
 
 param set PWM_AUX_MIN 1075
 param set PWM_AUX_MAX 2100
+
+#set the maximum tilt angle
+# param set MPC_MAN_TILT_MAX 89
+
 # set offset for pwm of flaps
 param set PWM_AUX_TRIM4 0
 param set PWM_AUX_TRIM5 0

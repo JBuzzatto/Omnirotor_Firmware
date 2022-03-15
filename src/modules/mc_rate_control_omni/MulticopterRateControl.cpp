@@ -293,18 +293,21 @@ MulticopterRateControl::Run()
 			// const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 			Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 
-			if (_rc_channels.channels[5] < (float)-0.5)
+			if (_rc_channels.channels[8] < (float)-0.5)
 			{
 				// att_control(2) = 0; //ignore yaw
 				inverted_ctrl(att_control);
 			}
-			else if (_rc_channels.channels[5] > (float)-0.1 && _rc_channels.channels[5] < (float)0.1)
+			// else if (_rc_channels.channels[8] > (float)-0.1 && _rc_channels.channels[8] < (float)0.1)
+			else if (_rc_channels.channels[8] > (float)-0.1)
 			{
 				// att_control(1) = 0; //ignore pitch
 				att_control(2) = -att_control(2); //invert yaw
 				hanging_ctrl(att_control);
+				// inverted_ctrl(att_control);
 			}
-
+		//==================================================================//
+		//============== here ENDS your main code/loop ===================//
 
 
 			// publish rate controller status
@@ -516,8 +519,9 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	{
 		_dynxls_d.x = 0;
 		_dynxls_d.y = 0;
-		// _dynxls_d.x = u(0);
-		// _dynxls_d.y = u(1);
+
+		_dynxls_d.x = 0; //for not using the fork dof
+		_dynxls_d.y = u(1);
 		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();
 		_debug_vect_pub.publish(_dynxls_d);
@@ -526,13 +530,27 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 
 void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 {
+	//Do here the mapping to a desired thrust
+	Vector3f T_dtal;
+	T_dtal = torque_CG_map_inv(att_control_);
+	//Add the thrust on z direction
+	T_dtal(2) = T_dtal(2) - _thrust_sp - 17;
+
+	//Do the IK for the rotor
+	Vector3f u;
+	u = rotor_IK_no_sing(T_dtal);
+
+	// _dynxls_d.timestamp = hrt_absolute_time();
+	// _debug_vect_pub.publish(_dynxls_d);
+
 	float pi = 3.1415;
 	//publish only if armed
 	if (_v_control_mode.flag_armed)
 	{
-		_dynxls_d.x = 0; //set fork joint to 0 deg
-		_dynxls_d.y = att_control_(0)*(pi/6) + pi;
-		_dynxls_d.z = 1; //my convention to id this msg on mavlink comm
+		_dynxls_d.x = u(0);
+		_dynxls_d.x = 0; //for not using the fork dof
+		_dynxls_d.y = -u(1)+pi;
+		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();
 		_debug_vect_pub.publish(_dynxls_d);
 	}
@@ -540,8 +558,11 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	{
 		_dynxls_d.x = 0;
 		_dynxls_d.y = 0;
-		//_dynxls_d.y = 0;
-		_dynxls_d.z = 1; //my convention to id this msg on mavlink comm
+
+		_dynxls_d.x = u(0);
+		_dynxls_d.x = 0; //for not using the fork dof
+		_dynxls_d.y = -u(1)+pi;
+		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();
 		_debug_vect_pub.publish(_dynxls_d);
 	}

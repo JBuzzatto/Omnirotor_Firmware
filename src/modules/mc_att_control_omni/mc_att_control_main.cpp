@@ -121,6 +121,7 @@ void
 MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt, bool reset_yaw_sp)
 {
 	vehicle_attitude_setpoint_s attitude_setpoint{};
+
 	const float yaw = Eulerf(q).psi();
 
 	/* reset yaw setpoint to current position if needed */
@@ -170,7 +171,8 @@ MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt,
 	attitude_setpoint.yaw_body = _man_yaw_sp + euler_sp(2);
 
 	/* modify roll/pitch only if we're a VTOL */
-	if (_vtol) {
+	// if (true) {  //my modification to check stuff
+	if (_vtol) { //original
 		// Construct attitude setpoint rotation matrix. Modify the setpoints for roll
 		// and pitch such that they reflect the user's intention even if a large yaw error
 		// (yaw_sp - yaw) is present. In the presence of a yaw error constructing a rotation matrix
@@ -206,9 +208,23 @@ MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt,
 		attitude_setpoint.pitch_body = atan2f(z_roll_pitch_sp(0), z_roll_pitch_sp(2));
 	}
 
+	//==================================================================//
+	//============== here starts your main code/loop ===================//
+	//check mode condition
+	if (_rc_channels.channels[8] < (float)-0.5) //for inverted
+	{
+		//do nothing
+	}
+
+	else if (_rc_channels.channels[8] > (float)-0.1) //for hanging
+	{
+		attitude_setpoint.pitch_body = -attitude_setpoint.pitch_body;
+	}
+	//==================================================================//
+	//============== here ENDS your main code/loop ===================//
+
 	/* copy quaternion setpoint to attitude setpoint topic */
 	Quatf q_sp = Eulerf(attitude_setpoint.roll_body, attitude_setpoint.pitch_body, attitude_setpoint.yaw_body);
-
 	q_sp.copyTo(attitude_setpoint.q_d);
 
 	attitude_setpoint.thrust_body[2] = -throttle_curve(_manual_control_setpoint.z);
@@ -243,42 +259,16 @@ MulticopterAttitudeControl::Run()
 
 	if (_vehicle_attitude_sub.update(&v_att)) {
 
+		//read the rc channels you need
+		_rc_channels_sub.update(&_rc_channels);
+
 		// Check for new attitude setpoint
 		if (_vehicle_attitude_setpoint_sub.updated()) {
 			vehicle_attitude_setpoint_s vehicle_attitude_setpoint;
 			_vehicle_attitude_setpoint_sub.update(&vehicle_attitude_setpoint);
 
-			//==================================================================//
-			//============== here starts your main code/loop ===================//
-			//read the rc channels you need
-			_rc_channels_sub.update(&_rc_channels);
-
-			// _debug_v.x = _rc_channels.channels[5]; //set fork joint to 90 deg
-			// //_debug_v.y = 0;
-			// _debug_v.z = 3; //my convention to id this msg on mavlink comm
-			// _debug_v.timestamp = hrt_absolute_time();
-			// _debug_vect_pub.publish(_debug_v);
-
-			//check mode condition
-			if (_rc_channels.channels[5] < (float)-0.5) //for inverted
-			{
-				_attitude_control.setAttitudeSetpoint(Quatf(vehicle_attitude_setpoint.q_d), vehicle_attitude_setpoint.yaw_sp_move_rate);
-				_thrust_setpoint_body = Vector3f(vehicle_attitude_setpoint.thrust_body);
-				//_debug_v.y = 10;
-			}
-			else if (_rc_channels.channels[5] > (float)-0.1 && _rc_channels.channels[5] < (float)0.1) //for hanging
-			{
-				//invert current attitude
-				Quatf q_dummy(vehicle_attitude_setpoint.q_d);
-				//create quaternion to rotate att set point by 180 deg on x (roll)
-				Quatf q_r(Eulerf(3.1415,0,0));
-				_attitude_control.setAttitudeSetpoint(q_dummy*q_r, vehicle_attitude_setpoint.yaw_sp_move_rate);
-				_thrust_setpoint_body = Vector3f(vehicle_attitude_setpoint.thrust_body);
-				// _thrust_setpoint_body = -_thrust_setpoint_body;
-				//_debug_v.y = 1;
-			}
-			// _attitude_control.setAttitudeSetpoint(Quatf(vehicle_attitude_setpoint.q_d), vehicle_attitude_setpoint.yaw_sp_move_rate);
-			// _thrust_setpoint_body = Vector3f(vehicle_attitude_setpoint.thrust_body);
+			_attitude_control.setAttitudeSetpoint(Quatf(vehicle_attitude_setpoint.q_d), vehicle_attitude_setpoint.yaw_sp_move_rate);
+			_thrust_setpoint_body = Vector3f(vehicle_attitude_setpoint.thrust_body);
 		}
 
 		//Check for a heading reset
@@ -337,7 +327,33 @@ MulticopterAttitudeControl::Run()
 
 		if (run_att_ctrl) {
 
-			const Quatf q{v_att.q};
+			//==================================================================//
+			//============== here starts your main code/loop ===================//
+			//read the rc channels you need
+			// _rc_channels_sub.update(&_rc_channels);
+			//NOTE: this seem to apply to mannual control too! Need to test tomorrow
+			Quatf q_temp;
+
+			//check mode condition
+			if (_rc_channels.channels[8] < (float)-0.5) //for inverted
+			{
+				//do nothing
+				q_temp = Quatf(v_att.q);
+			}
+
+			else if (_rc_channels.channels[8] > (float)-0.1) //for hanging
+			{
+				//invert current attitude
+				Quatf q_dummy(v_att.q);
+				//create quaternion to rotate att set point by 180 deg on x (roll)
+				Quatf q_r(Eulerf(3.1415,0,0));
+
+				q_temp = q_r*q_dummy;
+			}
+			//==================================================================//
+			//============== here ENDS your main code/loop ===================//
+
+			const Quatf q = q_temp;
 
 			// Generate the attitude setpoint from stick inputs if we are in Manual/Stabilized mode
 			if (_v_control_mode.flag_control_manual_enabled &&
