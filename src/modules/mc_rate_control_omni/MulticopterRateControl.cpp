@@ -293,18 +293,27 @@ MulticopterRateControl::Run()
 			// const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 			Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 
-			if (_rc_channels.channels[8] < (float)-0.5)
+			if ((_rc_channels.channels[7] < (float)-0.1))
 			{
-				// att_control(2) = 0; //ignore yaw
-				inverted_ctrl(att_control);
+				if (_rc_channels.channels[8] < (float)-0.5)
+				{
+					// att_control(2) = 0; //ignore yaw
+					inverted_ctrl(att_control);
+				}
+				else if (_rc_channels.channels[8] > (float)-0.1)
+				{
+					// att_control(1) = 0; //ignore pitch
+					att_control(2) = -att_control(2); //invert yaw
+					hanging_ctrl(att_control);
+				}
 			}
-			// else if (_rc_channels.channels[8] > (float)-0.1 && _rc_channels.channels[8] < (float)0.1)
-			else if (_rc_channels.channels[8] > (float)-0.1)
+			else
 			{
-				// att_control(1) = 0; //ignore pitch
-				att_control(2) = -att_control(2); //invert yaw
-				hanging_ctrl(att_control);
-				// inverted_ctrl(att_control);
+				//ignore all rate control
+				att_control(0) = 0;
+				att_control(1) = 0;
+				att_control(2) = 0;
+				ground_ctrl(att_control);
 			}
 		//==================================================================//
 		//============== here ENDS your main code/loop ===================//
@@ -401,7 +410,7 @@ void MulticopterRateControl::update_dynxl_pos()
 			if (_dynxls.z >= (float)1.95 && _dynxls.z <= (float)2.05)
 			{
 				dyxl_pos1 = _dynxls.x;
-				//dyxl_pos2 = _dynxls.y;
+				// dyxl_pos2 = _dynxls.y; //If not commentted, it stops working.
 			}
 	}
 }
@@ -433,6 +442,7 @@ Vector3f MulticopterRateControl::rotor_IK_no_sing(Vector3f T_d_)
 	//Get the rotation matrix of the fork link w.r.t to the base link
 	// define an euler angle (Body 3(yaw)-2(pitch)-1(roll) rotation)
 	float yaw_fork = (float)dyxl_pos1;  //rotation on z axis
+	yaw_fork = 0; //This was messing things when using ground mode
 	Eulerf euler_fork(0.0, 0.0, yaw_fork); //euler angles
 	Dcmf R_fork(euler_fork); //creates the rotation matrix from euler angles
 	//express T_d_norm on the fork frame
@@ -508,8 +518,8 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	//publish only if armed
 	if (_v_control_mode.flag_armed)
 	{
-		_dynxls_d.x = u(0);
 		_dynxls_d.x = 0; //for not using the fork dof
+		_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
 		_dynxls_d.y = u(1);
 		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();
@@ -517,10 +527,8 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	}
 	else
 	{
-		_dynxls_d.x = 0;
-		_dynxls_d.y = 0;
-
 		_dynxls_d.x = 0; //for not using the fork dof
+		_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
 		_dynxls_d.y = u(1);
 		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();
@@ -547,8 +555,8 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	//publish only if armed
 	if (_v_control_mode.flag_armed)
 	{
-		_dynxls_d.x = u(0);
 		_dynxls_d.x = 0; //for not using the fork dof
+		_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
 		_dynxls_d.y = -u(1)+pi;
 		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();
@@ -556,16 +564,26 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	}
 	else
 	{
-		_dynxls_d.x = 0;
-		_dynxls_d.y = 0;
-
-		_dynxls_d.x = u(0);
 		_dynxls_d.x = 0; //for not using the fork dof
+		_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
 		_dynxls_d.y = -u(1)+pi;
 		_dynxls_d.z = u(2);
 		_dynxls_d.timestamp = hrt_absolute_time();
 		_debug_vect_pub.publish(_dynxls_d);
 	}
+}
+
+void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
+{
+	float pi = 3.1415;
+	grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old;
+	// grd_mode_pos1_old = 0;
+	_dynxls_d.x = grd_mode_pos1_old;
+	_dynxls_d.y = pi/(float)2.0 - _rc_channels.channels[2]*pi;
+	_dynxls_d.z = 1;
+	_dynxls_d.timestamp = hrt_absolute_time();
+	_debug_vect_pub.publish(_dynxls_d); //my convention to id this msg on mavlink comm
+
 }
 
 int MulticopterRateControl::print_usage(const char *reason)

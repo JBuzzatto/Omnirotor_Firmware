@@ -136,6 +136,7 @@ private:
 	debug_vect_s			_dynxls_d{};   //desired setpoint
 	double dyxl_pos1 = 0;
 	double dyxl_pos2 = 0;
+	double grd_mode_pos1_old = 0;
 	double dyxl_pos1_d = 0;
 	double dyxl_pos2_d = 0;
 	AlphaFilter<float> pos_fork_filter{};
@@ -147,6 +148,7 @@ private:
 	matrix::Vector3f rotor_IK_no_sing(matrix::Vector3f T_d_);
 	void inverted_ctrl(matrix::Vector3f att_control_);
 	void hanging_ctrl(matrix::Vector3f att_control_);
+	void ground_ctrl(matrix::Vector3f att_control_);
 	//========== omnirotor functions END ===============//
 
 
