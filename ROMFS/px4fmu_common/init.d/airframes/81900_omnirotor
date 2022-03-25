@@ -76,5 +76,5 @@ set MIXER_AUX pass
 # set PWM_AUX_OUT 45
 set PWM_OUT 2345
 
-set MIXER omni_flap
-# set MIXER omni_flap_even_m
+# set MIXER omni_flap
+set MIXER omni_flap_even

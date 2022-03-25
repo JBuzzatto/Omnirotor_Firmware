@@ -465,6 +465,21 @@ RCUpdate::Run()
 			manual_control_setpoint.aux5 = get_rc_value(rc_channels_s::RC_CHANNELS_FUNCTION_AUX_5, -1.0, 1.0);
 			manual_control_setpoint.aux6 = get_rc_value(rc_channels_s::RC_CHANNELS_FUNCTION_AUX_6, -1.0, 1.0);
 
+			//==================================================================//
+			//============== here starts your main code/loop ===================//
+			//check mode condition
+			if (_rc.channels[8] < (float)-0.5) //for inverted
+			{
+				//do nothing
+			}
+
+			else if (_rc.channels[8] > (float)-0.1) //for hanging
+			{
+				manual_control_setpoint.r = -get_rc_value(rc_channels_s::RC_CHANNELS_FUNCTION_YAW, -1.0, 1.0);
+			}
+			//==================================================================//
+			//============== here ENDS your main code/loop ===================//
+
 			if (_param_rc_map_fltmode.get() > 0) {
 				/* number of valid slots */
 				const int num_slots = manual_control_setpoint_s::MODE_SLOT_NUM;

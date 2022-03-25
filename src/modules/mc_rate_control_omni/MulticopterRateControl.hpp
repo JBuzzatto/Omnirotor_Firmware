@@ -137,6 +137,8 @@ private:
 	double dyxl_pos1 = 0;
 	double dyxl_pos2 = 0;
 	double grd_mode_pos1_old = 0;
+	double grd_mode_pos2_old = 0;
+	double grd_mode_pos2_next_vertical = 0;
 	double dyxl_pos1_d = 0;
 	double dyxl_pos2_d = 0;
 	AlphaFilter<float> pos_fork_filter{};
@@ -149,6 +151,7 @@ private:
 	void inverted_ctrl(matrix::Vector3f att_control_);
 	void hanging_ctrl(matrix::Vector3f att_control_);
 	void ground_ctrl(matrix::Vector3f att_control_);
+	void free_rotation_ctrl(matrix::Vector3f att_control_);
 	//========== omnirotor functions END ===============//
 
 

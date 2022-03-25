@@ -169,6 +169,20 @@ MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt,
 	//   let a := tilt angle, b := atan(y/x) (direction of maximum tilt)
 	//   yaw = atan(-2 * sin(b) * cos(b) * sin^2(a/2) / (1 - 2 * cos^2(b) * sin^2(a/2))).
 	attitude_setpoint.yaw_body = _man_yaw_sp + euler_sp(2);
+	//==================================================================//
+	//============== here starts your main code/loop ===================//
+	//check mode condition
+	if (_rc_channels.channels[8] < (float)-0.5) //for inverted
+	{
+		//do nothing
+	}
+
+	else if (_rc_channels.channels[8] > (float)-0.1) //for hanging
+	{
+		attitude_setpoint.yaw_body = _man_yaw_sp + euler_sp(2);
+	}
+	//==================================================================//
+	//============== here ENDS your main code/loop ===================//
 
 	/* modify roll/pitch only if we're a VTOL */
 	// if (true) {  //my modification to check stuff

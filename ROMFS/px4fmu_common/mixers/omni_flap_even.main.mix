@@ -18,16 +18,16 @@ M: 2
 S: 0 2  -10000  -10000      0 -10000  10000
 S: 0 3      0  20000 -10000 -10000  10000
 
-Mixing between yaw and pitch, yaw compensation reduced
+Mixing between yaw and pitch
 Left servo
 -------------
 M: 2
-S: 0 1  10000  10000  2000 -10000  10000
+S: 0 1  -10000  -10000  3000 -10000  10000
 S: 0 2  5000  5000 0 -10000  10000
 
-Mixing between yaw and pitch, yaw compensation reduced
-Left servo
+Mixing between yaw and pitch
+Right servo
 -------------
 M: 2
-S: 0 1  -10000  -10000  3500 -10000  10000
+S: 0 1  10000  10000  3000 -10000  10000
 S: 0 2  5000  5000 0 -10000  10000
