@@ -316,7 +316,8 @@ MulticopterRateControl::Run()
 
 				if ((_rc_channels.channels[7] > (float)-0.2) && (_rc_channels.channels[7] > (float)0.2))
 				{
-					ground_ctrl(att_control);
+					// ground_ctrl(att_control);
+					ground_ctrl_position(att_control);
 				}
 				else
 				{
@@ -586,7 +587,6 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 
 void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 {
-	// float MATH_PI = 3.1415;
 	grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old;
 	// grd_mode_pos1_old = 0;
 	_dynxls_d.x = grd_mode_pos1_old;
@@ -595,6 +595,18 @@ void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d); //my convention to id this msg on mavlink comm
 
+}
+
+void MulticopterRateControl::ground_ctrl_position(Vector3f att_control_)
+{
+	// float MATH_PI = 3.1415;
+	_vehicle_local_position_setpoint_sub.update(&_local_pos_setpoint);
+	// grd_mode_pos1_old = 0;
+	_dynxls_d.x = atan2(_local_pos_setpoint.thrust[0], _local_pos_setpoint.thrust[1]);;
+	_dynxls_d.y = (float)MATH_PI;
+	_dynxls_d.z = 1;
+	_dynxls_d.timestamp = hrt_absolute_time();
+	_debug_vect_pub.publish(_dynxls_d); //my convention to id this msg on mavlink comm
 }
 
 void MulticopterRateControl::free_rotation_ctrl(Vector3f att_control_)

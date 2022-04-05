@@ -67,6 +67,7 @@
 #include <uORB/topics/debug_vect.h>
 #include <uORB/topics/debug_array.h>
 #include <lib/ecl/AlphaFilter/AlphaFilter.hpp>
+#include <uORB/topics/vehicle_local_position_setpoint.h>
 //========== omnirotor includes END ===========//
 
 class MulticopterRateControl : public ModuleBase<MulticopterRateControl>, public ModuleParams, public px4::WorkItem
@@ -115,6 +116,7 @@ private:
 	//========== omnirotor subscriptions ===================//
 	uORB::Subscription _debug_vect_sub{ORB_ID(debug_vect)};
 	uORB::Subscription _rc_channels_sub{ORB_ID(rc_channels)};
+	uORB::Subscription _vehicle_local_position_setpoint_sub{ORB_ID(vehicle_local_position_setpoint)};
 	//========== omnirotor subscriptions END ===============//
 
 	uORB::SubscriptionCallbackWorkItem _vehicle_angular_velocity_sub{this, ORB_ID(vehicle_angular_velocity)};
@@ -143,6 +145,7 @@ private:
 	double dyxl_pos2_d = 0;
 	AlphaFilter<float> pos_fork_filter{};
 	rc_channels_s			_rc_channels{};
+	vehicle_local_position_setpoint_s _local_pos_setpoint{};
 	//========== omnirotor uORB msg structures END ===============//
 	//========== omnirotor functions ===================//
 	void update_dynxl_pos();
@@ -151,6 +154,7 @@ private:
 	void inverted_ctrl(matrix::Vector3f att_control_);
 	void hanging_ctrl(matrix::Vector3f att_control_);
 	void ground_ctrl(matrix::Vector3f att_control_);
+	void ground_ctrl_position(matrix::Vector3f att_control_);
 	void free_rotation_ctrl(matrix::Vector3f att_control_);
 	//========== omnirotor functions END ===============//
 
