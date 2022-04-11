@@ -625,7 +625,7 @@ void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 	grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old;
 	// grd_mode_pos1_old = 0;
 	_dynxls_d.x = grd_mode_pos1_old;
-	_dynxls_d.y = (float)MATH_PI/(float)2.0 - _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
+	_dynxls_d.y = _rc_channels.channels[10]*(float)MATH_PI/(float)2.0 + (float)MATH_PI/(float)2.0 - _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
 	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d); //my convention to id this msg on mavlink comm
