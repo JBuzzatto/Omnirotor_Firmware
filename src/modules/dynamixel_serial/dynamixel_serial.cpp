@@ -339,7 +339,7 @@ int DynamixelSerial::task_spawn(int argc, char *argv[])
 DynamixelSerial *DynamixelSerial::instantiate(int argc, char *argv[])
 {
 	const char *device_name = DEFAULT_DEVICE_NAME; /* default device*/;
-	int baud = 57600;  			/* default baudrate */;
+	int baud = 1000000;  			/* default baudrate */;
 	sentPackets = 0;
 
 	bool error_flag = false;

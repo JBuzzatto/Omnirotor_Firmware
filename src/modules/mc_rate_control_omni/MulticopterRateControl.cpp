@@ -316,12 +316,14 @@ MulticopterRateControl::Run()
 
 				if ((_rc_channels.channels[7] > (float)-0.2) && (_rc_channels.channels[7] > (float)0.2))
 				{
-					// ground_ctrl(att_control);
-					ground_ctrl_position(att_control);
+
+					// ground_ctrl_position(att_control);
+					ground_restore(att_control);
 				}
 				else
 				{
-					free_rotation_ctrl(att_control);
+					// free_rotation_ctrl(att_control);
+					ground_ctrl(att_control);
 				}
 
 
@@ -585,6 +587,39 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	}
 }
 
+void MulticopterRateControl::ground_restore(Vector3f att_control_)
+{
+	_vehicle_attitude_sub.update(&vehicle_att);
+
+	//Do here the mapping to a desired thrust
+	Quatf q(vehicle_att.q);
+	Dcmf R(q);
+	Vector3f G_z;
+	G_z = R.T()*Vector3f(0,0,1); //z vector for ground frame. Direction of gravity, as seen from the vehicle frame.
+	// Vector3f G_z_on_xy(G_z(0), G_z(1), 0); //Project G_z on the zy plane of vehicle frame
+
+	// Matrix<float, 1, 1> atany_ = (fork_yxTdp.T()*Vector3f(0,0,-1));
+	// Matrix<float, 1, 1> atanx_ = (T_d_on_fork_xy_norm.T()*Vector3f(0,-1,0));
+	// float atany = -atany_(0,0);
+	// float atanx = atanx_(0,0);
+	float theta_fork = atan(G_z(0)/G_z(1)); //get the angle between projected z_ground and y axis of vehicle frame
+	float theta_core = atan2(-G_z(2),G_z(1)); //get the angle between projected z_ground and y axis of vehicle frame
+	if (fabsf(G_z(2)) > 0.93f)
+	{
+		theta_fork = 0;
+		// theta_core = 0;
+	}
+	grd_mode_pos1_old = grd_mode_pos1_old + (double)theta_fork*0.005;
+
+
+	_dynxls_d.x = 0; //for not using the fork dof
+	_dynxls_d.x = grd_mode_pos1_old;
+	_dynxls_d.y = theta_core + (float)MATH_PI/(float)2.0 + (float)grd_mode_pos2_next_vertical;;
+	_dynxls_d.z = 1;
+	_dynxls_d.timestamp = hrt_absolute_time();
+	_debug_vect_pub.publish(_dynxls_d);
+}
+
 void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 {
 	grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old;
@@ -602,7 +637,7 @@ void MulticopterRateControl::ground_ctrl_position(Vector3f att_control_)
 	// float MATH_PI = 3.1415;
 	_vehicle_local_position_setpoint_sub.update(&_local_pos_setpoint);
 	// grd_mode_pos1_old = 0;
-	_dynxls_d.x = atan2(_local_pos_setpoint.thrust[0], _local_pos_setpoint.thrust[1]);;
+	_dynxls_d.x = atan2(_local_pos_setpoint.thrust[0], _local_pos_setpoint.thrust[1]);
 	_dynxls_d.y = (float)MATH_PI;
 	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
