@@ -179,7 +179,7 @@ public:
 	void init(const int serial_uart, uint32_t serial_baud);
 	bool update();
 
-	void set_setpoints(int i, uint32_t val, uint32_t led, uint32_t mode);
+	void set_setpoints(int i, int32_t val, uint32_t led, uint32_t mode);
 	int get_uart() {return uart;}
 
 
@@ -196,7 +196,7 @@ private:
 	void send_packet(uint8_t *txpacket);
 	void read_bytes();
 	void process_packet(const uint8_t *pkt, uint8_t length);
-	void send_command(uint8_t id, Reg reg_addr, uint32_t value);
+	void send_command(uint8_t id, Reg reg_addr, int32_t value);
 	void configure_servos(void);
 	uint16_t updateCRC(uint16_t crc_accum, uint8_t *data_blk_ptr, uint16_t data_blk_size);
 	uint8_t get_size(Reg reg);
@@ -212,8 +212,8 @@ private:
 
 	uint32_t op_mode{3};
 
-	uint32_t val_sp[17] = {0}; //setpoint array
-	uint32_t led_sp[17] = {0}; //setpoint array
+	int32_t val_sp[17] = {0}; //setpoint array
+	int32_t led_sp[17] = {0}; //setpoint array
 
 	bool broadcast;           //broadcast flag
 

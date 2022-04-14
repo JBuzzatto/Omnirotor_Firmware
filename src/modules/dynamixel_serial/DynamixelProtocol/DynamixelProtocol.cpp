@@ -183,18 +183,24 @@ void DynamixelProtocol::configure_servos(void)
 	// disable replies unless we read
 	send_command(BROADCAST_ID, Reg::STATUS_RETURN_LEVEL, 1);
 
+	// // set Homming offset to dyn id 2
+	// send_command(2, Reg::HOMING_OFFSET, -3941);
+
 	// set mode
 	send_command(BROADCAST_ID, Reg::OPERATING_MODE, op_mode);
 
+	send_command(2, Reg::HOMING_OFFSET, -3941);
+
 	// enable torque control
 	send_command(BROADCAST_ID, Reg::TORQUE_ENABLE, 1);
+
 }
 
 
 /*
   send a command to a single servo, changing a register value
  */
-void DynamixelProtocol::send_command(uint8_t id, Reg reg_addr, uint32_t value)
+void DynamixelProtocol::send_command(uint8_t id, Reg reg_addr, int32_t value)
 {
 	uint8_t txpacket[16] {};
 
@@ -308,7 +314,7 @@ void DynamixelProtocol::process_packet(const uint8_t *pkt, uint8_t length)
 	}
 }
 
-void DynamixelProtocol::set_setpoints(int i, uint32_t val, uint32_t led, uint32_t mode)
+void DynamixelProtocol::set_setpoints(int i, int32_t val, uint32_t led, uint32_t mode)
 {
 
 	if (mode != op_mode) {
@@ -358,6 +364,7 @@ bool DynamixelProtocol::update()
 
 	last_send_us = now;
 	delay_time_us = 0;
+	bool flag = false;
 
 	// loop for all 16 channels
 	for (uint8_t i = 0; i < 16; i++) {
@@ -412,10 +419,10 @@ bool DynamixelProtocol::update()
 			send_command(i + 1, Reg::LED, led_sp[i]);
 		}
 
-		return true;
+		flag = true;
 	}
 
-	return false;
+	return flag;
 }
 
 //MX series Control Table

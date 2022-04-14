@@ -93,7 +93,7 @@ px4_add_board(
 		#**add my modified modules
 		mc_rate_control_omni #to build this you need to comment out the original "mc_rate_control". Also change accordingly rc.mc_apps file.
 		mc_att_control_omni	#to build this you need to comment out the original "mc_att_control". Also change accordingly rc.mc_apps file.
-		# dynamixel_serial
+		dynamixel_serial
 	SYSTEMCMDS
 		bl_update
 		dmesg

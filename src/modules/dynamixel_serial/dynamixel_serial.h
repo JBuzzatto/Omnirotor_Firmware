@@ -64,7 +64,7 @@ static unsigned long int sentPackets = 0;
 
 int _val_cmd = 0;  //custom command
 unsigned short int _led_cmd = 1;    //custom command
-unsigned short int _mode_cmd = 3; //custom command
+unsigned short int _mode_cmd = 4; //custom command #JOAO set to 4, extended position control
 unsigned short int _servo_id_cmd = 1;  //custom command
 
 class DynamixelSerial : public ModuleBase<DynamixelSerial>, public ModuleParams
