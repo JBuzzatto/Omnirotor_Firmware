@@ -48,6 +48,7 @@
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/debug_vect.h>
+#include <uORB/topics/rc_channels.h>
 
 #include <termios.h>
 #include "DynamixelProtocol/DynamixelProtocol.hpp"
@@ -126,5 +127,6 @@ private:
 	// Subscriptions
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 	uORB::Subscription _debug_vect_sub{ORB_ID(debug_vect)};
+	uORB::Subscription _rc_channels_sub{ORB_ID(rc_channels)};
 };
 

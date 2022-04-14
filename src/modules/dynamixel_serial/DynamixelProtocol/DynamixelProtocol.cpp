@@ -183,12 +183,10 @@ void DynamixelProtocol::configure_servos(void)
 	// disable replies unless we read
 	send_command(BROADCAST_ID, Reg::STATUS_RETURN_LEVEL, 1);
 
-	// // set Homming offset to dyn id 2
-	// send_command(2, Reg::HOMING_OFFSET, -3941);
-
 	// set mode
 	send_command(BROADCAST_ID, Reg::OPERATING_MODE, op_mode);
 
+	//For omnirotor. Set the homing offset for core
 	send_command(2, Reg::HOMING_OFFSET, -3941);
 
 	// enable torque control

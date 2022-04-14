@@ -457,9 +457,7 @@ void DynamixelSerial::run()
 	parameters_update(true);
 
 	debug_vect_s flags_vect;
-	//int ext_stop = 1; //Stop flag for timeout when external link lost
-
-	// dynamixel.set_setpoints(_servo_id_cmd, _val_cmd, _led_cmd, _mode_cmd);
+	rc_channels_s _rc_channels;
 
 	while (!should_exit()) {
 
@@ -467,50 +465,39 @@ void DynamixelSerial::run()
 
 		if ((status < 1) && _comm_state) { continue; }
 
-		// //Using debug_vect for dynamixel setpoints(flags_vect.y > 1)
-		// if (_debug_vect_sub.updated()) {
-
-			// _debug_vect_sub.copy(&flags_vect);
-
-		// 	_ext_setpoint = (flags_vect.y - 1.f);
-		// 	_ext_setpoint = (_ext_setpoint > 0.f) ? _ext_setpoint : 0.f;
-		// 	_ext_flag = true;
-		// 	ext_stop = 1;
-
-		// 	_debug_timestamp_last = hrt_absolute_time();
-		// }
-
-		// if (hrt_elapsed_time(&_debug_timestamp_last) > 1_s) {
-		// 	//timeout case external link lost
-		// 	_ext_flag = false;
-		// }
-
-		// if (_ext_flag) {
-		// 	_val_cmd = static_cast<int>(_ext_setpoint * 4095);
-
-		// } else if (ext_stop > 0) {
-		// 	_val_cmd = 0;
-		// 	ext_stop--;
-		// }
-
 		if (_debug_vect_sub.updated()) {
 
 			_debug_vect_sub.copy(&flags_vect);
+		}
+		if (_rc_channels_sub.updated()) {
+
+			_rc_channels_sub.copy(&_rc_channels);
 		}
 
 		if (constrain_input(_val_cmd, _mode_cmd)) {
 			PX4_WARN("Setpoint outside limits...\n Setting to %i.", _val_cmd);
 		}
 
-		// dynamixel.set_setpoints(_servo_id_cmd, _val_cmd, _led_cmd, _mode_cmd);
+		// dynamixel.set_setpoints(_servo_id_cmd, _val_cmd, _led_cmd, _mode_cmd); //Uncomment this if sending commands through console terminal
 
 		int32_t dynx_2_raw = dyn_extpos_rad2raw(flags_vect.y);
 		int32_t dynx_1_raw = dyn_extpos_rad2raw(flags_vect.x);
 
 
-		//Aparaently it has to be sent with the ids in order
+
+		//Apparently it has to be sent with the ids in order
 		dynamixel.set_setpoints(1, dynx_1_raw, 0, OPMODE_EXT_POS_CONTROL);
 		dynamixel.set_setpoints(2, dynx_2_raw, 0, OPMODE_EXT_POS_CONTROL);
+		if (_rc_channels.channels[9] > (float)-0.1)
+		{
+			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(-1.5), 0, OPMODE_EXT_POS_CONTROL);
+		}
+		else
+		{
+			dynamixel.set_setpoints(3, 0, 0, OPMODE_EXT_POS_CONTROL);
+		}
+
+
 
 		read(dynamixel.get_uart(), &sbuf[0], sizeof(sbuf));
 
