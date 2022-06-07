@@ -262,7 +262,7 @@ MulticopterRateControl::Run()
 		//============== here starts your main code/loop ===================//
 		//=== check your subscription here
 		//get update on dynamixels' position
-		update_dynxl_pos();
+		// update_dynxl_pos();
 
 		//read the rc channels you need
 		_rc_channels_sub.update(&_rc_channels);
@@ -298,13 +298,15 @@ MulticopterRateControl::Run()
 				if (_rc_channels.channels[8] < (float)-0.5)
 				{
 					// att_control(2) = 0; //ignore yaw
-					inverted_ctrl(att_control);
+					// inverted_ctrl(att_control);
+					mode = 1; //inverted
 				}
 				else if (_rc_channels.channels[8] > (float)-0.1)
 				{
 					// att_control(1) = 0; //ignore pitch
-					att_control(2) = -att_control(2); //invert yaw
-					hanging_ctrl(att_control);
+					// att_control(2) = -att_control(2); //invert yaw
+					// hanging_ctrl(att_control);
+					mode = 2; //hanging
 				}
 			}
 			else
@@ -316,19 +318,59 @@ MulticopterRateControl::Run()
 
 				if ((_rc_channels.channels[7] > (float)-0.2) && (_rc_channels.channels[7] > (float)0.2))
 				{
-
-					// ground_ctrl_position(att_control);
-					ground_restore(att_control);
+					// ground_restore(att_control);
+					mode = 3; //ground restore
 				}
 				else
 				{
 					// free_rotation_ctrl(att_control);
-					ground_ctrl(att_control);
+					// ground_ctrl(att_control);
+					// ground_ctrl_position(att_control);
+					mode = 4; //ground control or free rotation
 				}
 
 
 
 			}
+
+			//Account for mode change
+			if (mode != mode_old)
+			{
+				continuity_guarantee();
+			}
+
+			switch (mode)
+			{
+			case 1:
+				inverted_ctrl(att_control);
+				break;
+			case 2:
+				att_control(2) = -att_control(2); //invert yaw
+				hanging_ctrl(att_control);
+				break;
+			case 3:
+				//ignore all rate control
+				att_control(0) = 0;
+				att_control(1) = 0;
+				att_control(2) = 0;
+				ground_restore(att_control);
+				break;
+			case 4:
+				//ignore all rate control
+				att_control(0) = 0;
+				att_control(1) = 0;
+				att_control(2) = 0;
+				free_rotation_ctrl(att_control);
+				break;
+
+			default:
+				inverted_ctrl(att_control);
+				break;
+			}
+
+			//store the mode that runned this loop
+			mode_old = mode;
+
 		//==================================================================//
 		//============== here ENDS your main code/loop ===================//
 
@@ -423,7 +465,7 @@ void MulticopterRateControl::update_dynxl_pos()
 	{
 			if (_dynxls.z >= (float)1.95 && _dynxls.z <= (float)2.05)
 			{
-				dyxl_pos1 = _dynxls.x;
+				// dyxl_pos1 = _dynxls.x;
 				// dyxl_pos2 = _dynxls.y; //If not commentted, it stops working.
 			}
 	}
@@ -596,25 +638,23 @@ void MulticopterRateControl::ground_restore(Vector3f att_control_)
 	Dcmf R(q);
 	Vector3f G_z;
 	G_z = R.T()*Vector3f(0,0,1); //z vector for ground frame. Direction of gravity, as seen from the vehicle frame.
-	// Vector3f G_z_on_xy(G_z(0), G_z(1), 0); //Project G_z on the zy plane of vehicle frame
 
-	// Matrix<float, 1, 1> atany_ = (fork_yxTdp.T()*Vector3f(0,0,-1));
-	// Matrix<float, 1, 1> atanx_ = (T_d_on_fork_xy_norm.T()*Vector3f(0,-1,0));
-	// float atany = -atany_(0,0);
-	// float atanx = atanx_(0,0);
 	float theta_fork = atan(G_z(0)/G_z(1)); //get the angle between projected z_ground and y axis of vehicle frame
-	float theta_core = atan2(-G_z(2),G_z(1)); //get the angle between projected z_ground and y axis of vehicle frame
+	float theta_core = atan2(-G_z(1),-G_z(2)) + (float)MATH_PI; //get the angle between the negative of z ground and y of vehicle
 	if (fabsf(G_z(2)) > 0.93f)
 	{
 		theta_fork = 0;
 		// theta_core = 0;
 	}
-	grd_mode_pos1_old = grd_mode_pos1_old + (double)theta_fork*0.005;
+	grd_mode_pos1_old = grd_mode_pos1_old + (double)theta_fork*0.005; //Gravity following with a P controller
 
 
 	_dynxls_d.x = 0; //for not using the fork dof
 	_dynxls_d.x = grd_mode_pos1_old;
-	_dynxls_d.y = theta_core + (float)MATH_PI/(float)2.0 + (float)grd_mode_pos2_next_vertical;;
+	_dynxls_d.y = theta_core + (float)grd_mode_pos2_next_vertical;
+
+	pos2_old = (float)_dynxls_d.y;
+
 	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d);
@@ -648,16 +688,41 @@ void MulticopterRateControl::free_rotation_ctrl(Vector3f att_control_)
 {
 	// float MATH_PI = 3.1415;
 	grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old;
-	grd_mode_pos2_old = (double)_rc_channels.channels[2]*-0.01 + grd_mode_pos2_old;
+	pos2_old = (double)_rc_channels.channels[2]*-0.01 + pos2_old;
 	_dynxls_d.x = grd_mode_pos1_old;
-	_dynxls_d.y = grd_mode_pos2_old;
+	_dynxls_d.y = pos2_old;
 	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d); //my convention to id this msg on mavlink comm
 
+	// //Get next vertical position for core motor
+	// float rotation;
+	// rotation = (float)pos2_old/(float)MATH_PI;
+	// int i_f;
+	// if (rotation >= 0)
+        // {
+	// 	i_f = (int) (rotation + (float)0.5);
+	// }
+    	// else
+        // {
+	// 	i_f = (int) (rotation - (float)0.5);
+	// }
+
+	// if ((i_f%2)==0)
+	// {
+	// 	grd_mode_pos2_next_vertical = i_f*(float)MATH_PI;
+	// }
+	// else
+	// {
+	// 	grd_mode_pos2_next_vertical = (i_f+1)*(float)MATH_PI;
+	// }
+}
+
+void MulticopterRateControl::continuity_guarantee()
+{
 	//Get next vertical position for core motor
 	float rotation;
-	rotation = (float)grd_mode_pos2_old/(float)MATH_PI;
+	rotation = (float)pos2_old/(float)MATH_PI;
 	int i_f;
 	if (rotation >= 0)
         {

@@ -143,10 +143,12 @@ private:
 	double dyxl_pos1 = 0;
 	double dyxl_pos2 = 0;
 	double grd_mode_pos1_old = 0;
-	double grd_mode_pos2_old = 0;
+	double pos2_old = 0;
 	double grd_mode_pos2_next_vertical = 0;
 	double dyxl_pos1_d = 0;
 	double dyxl_pos2_d = 0;
+	int mode = 0; //1-inverted, 2-hanging, 3-restore, 4-free rotation
+	int mode_old = 0;
 	AlphaFilter<float> pos_fork_filter{};
 	rc_channels_s			_rc_channels{};
 	// vehicle_local_position_setpoint_s _local_pos_setpoint{};
@@ -163,6 +165,7 @@ private:
 	void ground_ctrl_position(matrix::Vector3f att_control_);
 	void free_rotation_ctrl(matrix::Vector3f att_control_);
 	void ground_restore(matrix::Vector3f att_control_);
+	void continuity_guarantee();
 	//========== omnirotor functions END ===============//
 
 
