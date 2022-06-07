@@ -488,6 +488,8 @@ void DynamixelSerial::run()
 		//Apparently it has to be sent with the ids in order
 		dynamixel.set_setpoints(1, dynx_1_raw, 0, OPMODE_EXT_POS_CONTROL);
 		dynamixel.set_setpoints(2, dynx_2_raw, 0, OPMODE_EXT_POS_CONTROL);
+
+		//Controll the gripper (id = 3)
 		if (_rc_channels.channels[9] > (float)-0.1)
 		{
 			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(-1.5), 0, OPMODE_EXT_POS_CONTROL);
