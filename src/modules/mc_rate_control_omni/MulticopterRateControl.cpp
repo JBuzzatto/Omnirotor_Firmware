@@ -360,7 +360,8 @@ MulticopterRateControl::Run()
 				att_control(0) = 0;
 				att_control(1) = 0;
 				att_control(2) = 0;
-				free_rotation_ctrl(att_control);
+				// free_rotation_ctrl(att_control);
+				ground_ctrl(att_control);
 				break;
 
 			default:
@@ -662,10 +663,24 @@ void MulticopterRateControl::ground_restore(Vector3f att_control_)
 
 void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 {
-	grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old;
-	// grd_mode_pos1_old = 0;
+	_vehicle_attitude_sub.update(&vehicle_att);
+	//Do here the mapping to a desired thrust
+	Quatf q(vehicle_att.q);
+	Dcmf R(q);
+	Vector3f G_z;
+	G_z = R.T()*Vector3f(0,0,1); //z vector for ground frame. Direction of gravity, as seen from the vehicle frame.
+	if (G_z(2) < 0)
+	{
+		grd_mode_pos1_old = (double)_rc_channels.channels[1]*0.01 + grd_mode_pos1_old;
+		_dynxls_d.y = _rc_channels.channels[10]*(float)MATH_PI/(float)2.0 + (float)MATH_PI/(float)2.0 + _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
+	}
+	else
+	{
+		grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old; //keep radio input the same for both hanging and inverted pose
+		_dynxls_d.y = _rc_channels.channels[10]*(float)MATH_PI/(float)2.0 + (float)MATH_PI/(float)2.0 - _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
+	}
 	_dynxls_d.x = grd_mode_pos1_old;
-	_dynxls_d.y = _rc_channels.channels[10]*(float)MATH_PI/(float)2.0 + (float)MATH_PI/(float)2.0 - _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
+	// _dynxls_d.y = _rc_channels.channels[10]*(float)MATH_PI/(float)2.0 + (float)MATH_PI/(float)2.0 - _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
 	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d); //my convention to id this msg on mavlink comm
