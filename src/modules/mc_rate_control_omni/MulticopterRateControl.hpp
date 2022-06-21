@@ -165,6 +165,7 @@ private:
 	void ground_ctrl_position(matrix::Vector3f att_control_);
 	void free_rotation_ctrl(matrix::Vector3f att_control_);
 	void ground_restore(matrix::Vector3f att_control_);
+	void restore_and_hanging(matrix::Vector3f att_control_);
 	void continuity_guarantee();
 	//========== omnirotor functions END ===============//
 

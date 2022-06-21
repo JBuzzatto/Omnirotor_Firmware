@@ -346,7 +346,8 @@ MulticopterRateControl::Run()
 				break;
 			case 2:
 				att_control(2) = -att_control(2); //invert yaw
-				hanging_ctrl(att_control);
+				restore_and_hanging(att_control);
+				// hanging_ctrl(att_control);
 				break;
 			case 3:
 				//ignore all rate control
@@ -634,7 +635,6 @@ void MulticopterRateControl::ground_restore(Vector3f att_control_)
 {
 	_vehicle_attitude_sub.update(&vehicle_att);
 
-	//Do here the mapping to a desired thrust
 	Quatf q(vehicle_att.q);
 	Dcmf R(q);
 	Vector3f G_z;
@@ -642,7 +642,7 @@ void MulticopterRateControl::ground_restore(Vector3f att_control_)
 
 	float theta_fork = atan(G_z(0)/G_z(1)); //get the angle between projected z_ground and y axis of vehicle frame
 	float theta_core = atan2(-G_z(1),-G_z(2)) + (float)MATH_PI; //get the angle between the negative of z ground and y of vehicle
-	if (fabsf(G_z(2)) > 0.93f)
+	if (fabsf(G_z(2)) > 0.94f)
 	{
 		theta_fork = 0;
 		// theta_core = 0;
@@ -661,10 +661,31 @@ void MulticopterRateControl::ground_restore(Vector3f att_control_)
 	_debug_vect_pub.publish(_dynxls_d);
 }
 
+void MulticopterRateControl::restore_and_hanging(Vector3f att_control_)
+{
+	//Unifying ground restore and hanging flying mode
+	_vehicle_attitude_sub.update(&vehicle_att);
+
+	Quatf q(vehicle_att.q);
+	Dcmf R(q);
+	Vector3f G_z;
+	G_z = R.T()*Vector3f(0,0,1); //z vector for ground frame. Direction of gravity, as seen from the vehicle frame.
+
+	//Just switch to hanging control after a certaing tolerance in alighment with gravity (cos(25 deg) ~ 0.9)
+	if (fabsf(G_z(2)) > 0.77f)
+	{
+		hanging_ctrl(att_control_);
+	}
+	else
+	{
+		ground_restore(att_control_);
+	}
+
+}
+
 void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 {
 	_vehicle_attitude_sub.update(&vehicle_att);
-	//Do here the mapping to a desired thrust
 	Quatf q(vehicle_att.q);
 	Dcmf R(q);
 	Vector3f G_z;
