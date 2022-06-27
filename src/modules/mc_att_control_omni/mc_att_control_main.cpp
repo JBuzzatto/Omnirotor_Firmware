@@ -179,7 +179,7 @@ MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt,
 
 	else if (_rc_channels.channels[8] > (float)-0.1) //for hanging
 	{
-		attitude_setpoint.yaw_body = _man_yaw_sp + euler_sp(2);
+		attitude_setpoint.yaw_body = _man_yaw_sp + euler_sp(2); // only for mannual radio control. Just because of how they build the pose
 	}
 	//==================================================================//
 	//============== here ENDS your main code/loop ===================//
@@ -232,7 +232,7 @@ MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt,
 
 	else if (_rc_channels.channels[8] > (float)-0.1) //for hanging
 	{
-		attitude_setpoint.pitch_body = -attitude_setpoint.pitch_body;
+		attitude_setpoint.pitch_body = -attitude_setpoint.pitch_body; // only for mannual radio control. Just because of how they build the pose
 		// attitude_setpoint.yaw_body = -attitude_setpoint.yaw_body;
 	}
 	//==================================================================//
