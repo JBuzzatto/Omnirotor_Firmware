@@ -301,7 +301,14 @@ MulticopterRateControl::Run()
 					// inverted_ctrl(att_control);
 					mode = 1; //inverted
 				}
-				else if (_rc_channels.channels[8] > (float)-0.1)
+				else if (_rc_channels.channels[8] > (float)0.3)
+				{
+					// att_control(1) = 0; //ignore pitch
+					// att_control(2) = -att_control(2); //invert yaw
+					// hanging_ctrl(att_control);
+					mode = 5; //restore_and_hanging
+				}
+				else if ((_rc_channels.channels[8] > (float)-0.2) && (_rc_channels.channels[8] < (float)0.2))
 				{
 					// att_control(1) = 0; //ignore pitch
 					// att_control(2) = -att_control(2); //invert yaw
@@ -316,7 +323,7 @@ MulticopterRateControl::Run()
 				att_control(1) = 0;
 				att_control(2) = 0;
 
-				if ((_rc_channels.channels[7] > (float)-0.2) && (_rc_channels.channels[7] > (float)0.2))
+				if ((_rc_channels.channels[7] > (float)-0.2) && (_rc_channels.channels[7] < (float)0.2))
 				{
 					// ground_restore(att_control);
 					mode = 3; //ground restore
@@ -346,8 +353,7 @@ MulticopterRateControl::Run()
 				break;
 			case 2:
 				att_control(2) = -att_control(2); //invert yaw
-				restore_and_hanging(att_control);
-				// hanging_ctrl(att_control);
+				hanging_ctrl(att_control);
 				break;
 			case 3:
 				//ignore all rate control
@@ -363,6 +369,10 @@ MulticopterRateControl::Run()
 				att_control(2) = 0;
 				// free_rotation_ctrl(att_control);
 				ground_ctrl(att_control);
+				break;
+			case 5:
+				att_control(2) = -att_control(2); //invert yaw
+				restore_and_hanging(att_control);
 				break;
 
 			default:
@@ -573,25 +583,14 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	// _dynxls_d.timestamp = hrt_absolute_time();
 	// _debug_vect_pub.publish(_dynxls_d);
 
-	//publish only if armed
-	if (_v_control_mode.flag_armed)
-	{
-		_dynxls_d.x = 0; //for not using the fork dof
-		_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
-		_dynxls_d.y = u(1) + (float)grd_mode_pos2_next_vertical;
-		_dynxls_d.z = u(2);
-		_dynxls_d.timestamp = hrt_absolute_time();
-		_debug_vect_pub.publish(_dynxls_d);
-	}
-	else
-	{
-		_dynxls_d.x = 0; //for not using the fork dof
-		_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
-		_dynxls_d.y = u(1) + (float)grd_mode_pos2_next_vertical;
-		_dynxls_d.z = u(2);
-		_dynxls_d.timestamp = hrt_absolute_time();
-		_debug_vect_pub.publish(_dynxls_d);
-	}
+
+	_dynxls_d.x = 0; //for not using the fork dof
+	_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
+	_dynxls_d.y = u(1) + (float)grd_mode_pos2_next_vertical;
+	_dynxls_d.z = u(2);
+	_dynxls_d.timestamp = hrt_absolute_time();
+	_debug_vect_pub.publish(_dynxls_d);
+
 }
 
 void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
@@ -600,7 +599,7 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	Vector3f T_dtal;
 	T_dtal = torque_CG_map_inv(att_control_);
 	//Add the thrust on z direction
-	T_dtal(2) = T_dtal(2) - _thrust_sp - 17;
+	T_dtal(2) = -T_dtal(2) - _thrust_sp - 17;
 
 	//Do the IK for the rotor
 	Vector3f u;
@@ -611,24 +610,13 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 
 	// float MATH_PI = 3.1415;
 	//publish only if armed
-	if (_v_control_mode.flag_armed)
-	{
-		_dynxls_d.x = 0; //for not using the fork dof
-		_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
-		_dynxls_d.y = -u(1) + (float)MATH_PI + (float)grd_mode_pos2_next_vertical;
-		_dynxls_d.z = u(2);
-		_dynxls_d.timestamp = hrt_absolute_time();
-		_debug_vect_pub.publish(_dynxls_d);
-	}
-	else
-	{
-		_dynxls_d.x = 0; //for not using the fork dof
-		_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
-		_dynxls_d.y = -u(1) + (float)MATH_PI + (float)grd_mode_pos2_next_vertical;
-		_dynxls_d.z = u(2);
-		_dynxls_d.timestamp = hrt_absolute_time();
-		_debug_vect_pub.publish(_dynxls_d);
-	}
+	_dynxls_d.x = 0; //for not using the fork dof
+	_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
+	_dynxls_d.y = -u(1) + (float)MATH_PI + (float)grd_mode_pos2_next_vertical;
+	_dynxls_d.z = u(2);
+	_dynxls_d.timestamp = hrt_absolute_time();
+	_debug_vect_pub.publish(_dynxls_d);
+
 }
 
 void MulticopterRateControl::ground_restore(Vector3f att_control_)
