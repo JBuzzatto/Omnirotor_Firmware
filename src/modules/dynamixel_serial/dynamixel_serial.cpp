@@ -108,6 +108,12 @@ int dynamixel_open_uart(const int baud, const char *uart_name, struct termios *u
 	case 3000000: speed = B3000000; break;
 #endif
 
+	/*Joao doing some shit here*/
+	//force baud and speed
+	// baud = 57600;
+	// speed = B57600;
+	/*Joao doing some shit here*/
+
 	default:
 		PX4_ERR("Unsupported baudrate: %d\n\tsupported examples:\n\t9600, 19200, (default) 57600\t\n115200\n1000000\n",
 			baud);
@@ -351,8 +357,8 @@ int DynamixelSerial::task_spawn(int argc, char *argv[])
 
 DynamixelSerial *DynamixelSerial::instantiate(int argc, char *argv[])
 {
-	const char *device_name = DEFAULT_DEVICE_NAME; /* default device*/;
-	int baud = 1000000;  			/* default baudrate */;
+	const char *device_name = DEFAULT_DEVICE_NAME; /* default device*/
+	int baud = 57600;  			/* default baudrate */
 	sentPackets = 0;
 
 	bool error_flag = false;
@@ -492,7 +498,7 @@ void DynamixelSerial::run()
 		//Controll the gripper (id = 3)
 		if (_rc_channels.channels[9] > (float)-0.1)
 		{
-			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(-1.5), 0, OPMODE_EXT_POS_CONTROL);
+			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(_rc_channels.channels[4]*3.1415f), 0, OPMODE_EXT_POS_CONTROL);
 		}
 		else
 		{
