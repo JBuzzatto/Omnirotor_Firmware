@@ -70,6 +70,7 @@
 #include <uORB/topics/vehicle_local_position_setpoint.h>
 // #include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/test_motor.h>
 //========== omnirotor includes END ===========//
 
 class MulticopterRateControl : public ModuleBase<MulticopterRateControl>, public ModuleParams, public px4::WorkItem
@@ -131,6 +132,7 @@ private:
 	uORB::Publication<vehicle_rates_setpoint_s>	_v_rates_sp_pub{ORB_ID(vehicle_rates_setpoint)};			/**< rate setpoint publication */
 	//========== omnirotor publications ===================//
 	uORB::Publication<debug_vect_s>			_debug_vect_pub{ORB_ID(debug_vect)};
+	uORB::Publication<test_motor_s>			_test_motor_pub{ORB_ID(test_motor)};
 	//========== omnirotor publications END ===============//
 
 	landing_gear_s 			_landing_gear{};
@@ -154,6 +156,7 @@ private:
 	// vehicle_local_position_setpoint_s _local_pos_setpoint{};
 	vehicle_local_position_setpoint_s _local_pos_setpoint{};
 	vehicle_attitude_s vehicle_att{};
+	test_motor_s _test_motors{};
 	//========== omnirotor uORB msg structures END ===============//
 	//========== omnirotor functions ===================//
 	void update_dynxl_pos();

@@ -580,10 +580,6 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 	Vector3f u;
 	u = rotor_IK_no_sing(T_dtal);
 
-	// _dynxls_d.timestamp = hrt_absolute_time();
-	// _debug_vect_pub.publish(_dynxls_d);
-
-
 	_dynxls_d.x = 0; //for not using the fork dof
 	_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
 	_dynxls_d.y = u(1) + (float)grd_mode_pos2_next_vertical;
@@ -605,10 +601,6 @@ void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 	Vector3f u;
 	u = rotor_IK_no_sing(T_dtal);
 
-	// _dynxls_d.timestamp = hrt_absolute_time();
-	// _debug_vect_pub.publish(_dynxls_d);
-
-	// float MATH_PI = 3.1415;
 	//publish only if armed
 	_dynxls_d.x = 0; //for not using the fork dof
 	_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
@@ -682,6 +674,7 @@ void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 	{
 		grd_mode_pos1_old = (double)_rc_channels.channels[1]*0.01 + grd_mode_pos1_old;
 		_dynxls_d.y = _rc_channels.channels[10]*(float)MATH_PI/(float)2.0 + (float)MATH_PI/(float)2.0 + _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
+		_test_motors.value = _rc_channels.channels[10];
 	}
 	else
 	{
@@ -693,6 +686,14 @@ void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d); //my convention to id this msg on mavlink comm
+
+	//fill in _test_motor
+	_test_motors.action = _test_motors.ACTION_RUN;
+	_test_motors.motor_number = 3;
+	_test_motors.timeout_ms = 0;
+	_test_motors.timestamp = hrt_absolute_time();
+	_test_motors.driver_instance = 0;
+	_test_motor_pub.publish(_test_motors);
 
 }
 
@@ -719,27 +720,6 @@ void MulticopterRateControl::free_rotation_ctrl(Vector3f att_control_)
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d); //my convention to id this msg on mavlink comm
 
-	// //Get next vertical position for core motor
-	// float rotation;
-	// rotation = (float)pos2_old/(float)MATH_PI;
-	// int i_f;
-	// if (rotation >= 0)
-        // {
-	// 	i_f = (int) (rotation + (float)0.5);
-	// }
-    	// else
-        // {
-	// 	i_f = (int) (rotation - (float)0.5);
-	// }
-
-	// if ((i_f%2)==0)
-	// {
-	// 	grd_mode_pos2_next_vertical = i_f*(float)MATH_PI;
-	// }
-	// else
-	// {
-	// 	grd_mode_pos2_next_vertical = (i_f+1)*(float)MATH_PI;
-	// }
 }
 
 void MulticopterRateControl::continuity_guarantee()
