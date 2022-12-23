@@ -489,8 +489,6 @@ void DynamixelSerial::run()
 		int32_t dynx_2_raw = dyn_extpos_rad2raw(flags_vect.y);
 		int32_t dynx_1_raw = dyn_extpos_rad2raw(flags_vect.x);
 
-
-
 		//Apparently it has to be sent with the ids in order
 		dynamixel.set_setpoints(1, dynx_1_raw, 0, OPMODE_EXT_POS_CONTROL);
 		dynamixel.set_setpoints(2, dynx_2_raw, 0, OPMODE_EXT_POS_CONTROL);

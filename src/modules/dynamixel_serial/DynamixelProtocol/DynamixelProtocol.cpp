@@ -341,22 +341,26 @@ bool DynamixelProtocol::update()
 
 	if (last_send_us != 0 && now - last_send_us < delay_time_us) {
 		// waiting for last send to complete
+		PX4_INFO("waiting for last send to complete...");
 		return false;
 	}
 
 	if (detection_count < DETECT_SERVO_COUNT) {
 		detection_count++;
 		detect_servos();
+		PX4_INFO("trying to detect servos...");
 	}
 
-	if (servo_mask == 0) {
-		return false;
-	}
+	// if (servo_mask == 0) {****Joao did a hack here: commented this part
+	// 	PX4_INFO("servo_mask = 0");
+	// 	return false;
+	// }
 
 	if (configured_servos < CONFIGURE_SERVO_COUNT) {
 		configured_servos++;
 		last_send_us = now;
 		configure_servos();
+		PX4_INFO("configuring servos...");
 		return false;
 	}
 
@@ -364,11 +368,11 @@ bool DynamixelProtocol::update()
 	delay_time_us = 0;
 	bool flag = false;
 
-	// loop for all 16 channels
-	for (uint8_t i = 0; i < 16; i++) {
-		if (((1U << i) & servo_mask) == 0) {
-			continue;
-		}
+	// loop for all 16 channels ****Joao did a hack here: changed the 16 to 3
+	for (uint8_t i = 0; i < 3; i++) {
+		// if (((1U << i) & servo_mask) == 0) { ****Joao did a hack here: commented this part
+		// 	continue;
+		// }
 
 		if (broadcast) {
 
@@ -403,6 +407,7 @@ bool DynamixelProtocol::update()
 
 			case OPMODE_EXT_POS_CONTROL:
 				send_command(i + 1, Reg::GOAL_POSITION, val_sp[i]);
+				PX4_INFO("send_command with value = %i", val_sp[i]);
 				break;
 
 			case OPMODE_POS_CONTROL:
