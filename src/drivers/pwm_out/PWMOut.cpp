@@ -556,6 +556,16 @@ bool PWMOut::updateOutputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS],
 		return false;
 	}
 
+	//**Here, I bypass the mixer. On Pixhawk 4, connect the FMU PWM OUT to the FMU PWM IN the power board for this to work**//
+	_rc_channels_sub.update(&_rc_channels);
+	outputs[0] = _rc_channels.channels[0]*500 + 1500;
+	outputs[1] = _rc_channels.channels[0]*500 + 1500;
+	outputs[2] = _rc_channels.channels[0]*500 + 1500;
+	outputs[3] = _rc_channels.channels[0]*500 + 1500;
+	PX4_INFO("outputs[0]: %i", outputs[0]);
+	PX4_INFO("outputs[1]: %i", outputs[1]);
+	PX4_INFO("\\");
+
 	/* output to the servos */
 	if (_pwm_initialized) {
 		for (size_t i = 0; i < math::min(_num_outputs, num_outputs); i++) {

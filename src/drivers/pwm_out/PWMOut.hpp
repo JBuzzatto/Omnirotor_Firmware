@@ -62,6 +62,8 @@
 #include <uORB/topics/multirotor_motor_limits.h>
 #include <uORB/topics/parameter_update.h>
 
+#include <uORB/topics/rc_channels.h>
+
 using namespace time_literals;
 
 /** Mode given via CLI */
@@ -202,5 +204,8 @@ private:
 
 	PWMOut(const PWMOut &) = delete;
 	PWMOut operator=(const PWMOut &) = delete;
+
+	uORB::Subscription _rc_channels_sub{ORB_ID(rc_channels)};
+	rc_channels_s	_rc_channels{};
 
 };
