@@ -407,7 +407,7 @@ bool DynamixelProtocol::update()
 
 			case OPMODE_EXT_POS_CONTROL:
 				send_command(i + 1, Reg::GOAL_POSITION, val_sp[i]);
-				PX4_INFO("send_command with value = %i", val_sp[i]);
+				// PX4_INFO("send_command with value = %i", val_sp[i]);
 				break;
 
 			case OPMODE_POS_CONTROL:
