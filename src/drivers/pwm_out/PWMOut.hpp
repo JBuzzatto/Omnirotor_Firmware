@@ -63,6 +63,7 @@
 #include <uORB/topics/parameter_update.h>
 
 #include <uORB/topics/rc_channels.h>
+#include <uORB/topics/manual_control_setpoint.h>
 
 using namespace time_literals;
 
@@ -206,6 +207,10 @@ private:
 	PWMOut operator=(const PWMOut &) = delete;
 
 	uORB::Subscription _rc_channels_sub{ORB_ID(rc_channels)};
+	uORB::Subscription _actuators_armed_sub{ORB_ID(actuator_armed)};
+	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
 	rc_channels_s	_rc_channels{};
+	actuator_armed_s _actuator_armed{};
+	manual_control_setpoint_s	_manual_control_setpoint{};
 
 };

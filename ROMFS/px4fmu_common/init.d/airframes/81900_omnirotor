@@ -74,7 +74,8 @@ set MIXER_AUX pass
 
 # use PWM parameters for throttle channel
 # set PWM_AUX_OUT 45
-set PWM_OUT 2345
+set PWM_OUT 1234
 
 # set MIXER omni_flap
-set MIXER omni_flap_even
+# set MIXER omni_flap_even
+set MIXER quad_+

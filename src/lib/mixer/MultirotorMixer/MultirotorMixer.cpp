@@ -45,6 +45,9 @@
 
 #include <mathlib/mathlib.h>
 
+#include <lib/matrix/matrix/math.hpp> //Joao included
+
+
 #ifdef MIXER_MULTIROTOR_USE_MOCK_GEOMETRY
 enum class MultirotorGeometry : MultirotorGeometryUnderlyingType {
 	QUAD_X,
@@ -78,6 +81,21 @@ const char *_config_key[] = {"4x"};
 //#define debug(fmt, args...)	do { printf("[mixer] " fmt "\n", ##args); } while(0)
 //#include <debug.h>
 //#define debug(fmt, args...)	syslog(fmt "\n", ##args)
+
+using namespace matrix;
+
+//Joao defining stuff here
+// Matrix<float, 3, 3> skew_cross2(Vector3f v)
+// {
+//     Matrix<float, 3, 3> m;
+//     m(0,0) = 0; m(0,1) = -v(2); m(0,2) = v(1);
+//     m(1,0) = v(2); m(1,1) = 0; m(1,2) = -v(0);
+//     m(2,0) = -v(1); m(2,1) = v(0); m(2,2) = 0;
+
+//     return m;
+// }
+
+
 
 MultirotorMixer::MultirotorMixer(ControlCallback control_cb, uintptr_t cb_handle, MultirotorGeometry geometry,
 				 float roll_scale, float pitch_scale, float yaw_scale, float idle_speed) :
@@ -362,6 +380,12 @@ MultirotorMixer::mix(float *outputs, unsigned space)
 		mix_airmode_disabled(roll, pitch, yaw, thrust, outputs);
 		break;
 	}
+
+	//**Joao doing some hack here**//
+	outputs[0] = 0.3;
+	outputs[1] = 0.3;
+	outputs[2] = 0.3;
+	outputs[3] = 0.3;
 
 	// Apply thrust model and scale outputs to range [idle_speed, 1].
 	// At this point the outputs are expected to be in [0, 1], but they can be outside, for example
