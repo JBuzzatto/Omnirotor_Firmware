@@ -556,33 +556,43 @@ bool PWMOut::updateOutputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS],
 		return false;
 	}
 
+	// //**Joao starts here**//
 	_actuators_armed_sub.update(&_actuator_armed);
 	_rc_channels_sub.update(&_rc_channels);
 	_manual_control_setpoint_sub.update(&_manual_control_setpoint);
+	_actuator_controls_sub.update(&_actuator_controls);
+	_actuator_controls_6_sub.update(&_actuator_controls_6);
 	bool armed = _actuator_armed.armed;
-	// int kill_sw = (int)(_rc_channels.channels[6]*1000);
-
-	// PX4_INFO("_manual_control_setpoint.kill_switch: %i", _manual_control_setpoint.kill_switch);
 
 	//send only if armed and kill switch is off
 	if (armed && _manual_control_setpoint.kill_switch > 2)
 	{
 		//**Here, I bypass the mixer. On Pixhawk 4, connect the FMU PWM OUT to the FMU PWM IN the power board for this to work**//
-		outputs[0] = _rc_channels.channels[0]*500 + 1500;
-		outputs[1] = _rc_channels.channels[0]*500 + 1500;
-		outputs[2] = _rc_channels.channels[0]*500 + 1500;
-		outputs[3] = _rc_channels.channels[0]*500 + 1500;
-		// PX4_INFO("_manual_control_setpoint.kill_switch: %i", _manual_control_setpoint.kill_switch);
-		// PX4_INFO("\\");
+		for (size_t i = 0; i < 4; i++)
+		{
+			outputs[i] = _actuator_controls_6.control[i];
+		}
 	}
 	else
 	{
-		outputs[0] = 950;
-		outputs[1] = 950;
-		outputs[2] = 950;
-		outputs[3] = 950;
+		for (size_t i = 0; i < 4; i++)
+		{
+			outputs[i] = 900;
+		}
+		// for debuging
+		// for (size_t i = 0; i < 4; i++)
+		// {
+		// 	outputs[i] = _actuator_controls_6.control[i];
+		// }
 	}
 
+	//Limit the output
+	for (size_t i = 0; i < 4; i++)
+	{
+		outputs[i] = math::constrain(outputs[i], (uint16_t)850, (uint16_t)2100);
+	}
+
+	//**Joao ends here**//
 
 
 

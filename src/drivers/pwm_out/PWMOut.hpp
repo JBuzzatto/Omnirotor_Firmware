@@ -62,10 +62,15 @@
 #include <uORB/topics/multirotor_motor_limits.h>
 #include <uORB/topics/parameter_update.h>
 
+//Joao included
+#include <lib/matrix/matrix/math.hpp>
 #include <uORB/topics/rc_channels.h>
 #include <uORB/topics/manual_control_setpoint.h>
+#include <mathlib/math/Limits.hpp>
+#include <mathlib/math/Functions.hpp>
 
 using namespace time_literals;
+using math::radians;
 
 /** Mode given via CLI */
 enum PortMode {
@@ -209,8 +214,11 @@ private:
 	uORB::Subscription _rc_channels_sub{ORB_ID(rc_channels)};
 	uORB::Subscription _actuators_armed_sub{ORB_ID(actuator_armed)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
+	uORB::Subscription _actuator_controls_sub{ORB_ID(actuator_controls_0)};
+	uORB::Subscription _actuator_controls_6_sub{ORB_ID(actuator_controls_6)};
 	rc_channels_s	_rc_channels{};
 	actuator_armed_s _actuator_armed{};
 	manual_control_setpoint_s	_manual_control_setpoint{};
-
+	actuator_controls_s _actuator_controls{};
+	actuator_controls_s _actuator_controls_6{};
 };
