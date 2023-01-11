@@ -52,6 +52,29 @@ Matrix<float, 3, 3> skew_cross(Vector3f v)
 
     return m;
 }
+
+//Variable for mapping matrix
+// float z_r = 0.25;
+// float q_2 = 0.01;
+// float z_L = 0.15;
+// float z_R = 0.15;
+// float c_2 = 0.1;
+// float c_1 = 1;
+// float q_1 = 0.1;
+
+//put the mapping matrix here
+matrix::Matrix<float, 6, 6> make_map()
+{
+	matrix::Matrix<float, 6, 6> map; //This is already the inverse, calculated in matlab. ignore the used of small rotors to control roll.
+	map(0,0) = -0.1727;    map(0,1) = 0;     map(0,2) = 0;    map(0,3) = 0.0173;      map(0,4) = 0.9689;       map(0,5) = 0;
+	map(1,0) = 0;          map(1,1) = 0;     map(1,2) = 0;    map(1,3) = 0;           map(1,4) = 0;            map(1,5) = 1;
+	map(2,0) = -0.3358;    map(2,1) = 10;    map(2,2) = 0;    map(2,3) = -3.4664;     map(2,4) = -0.0604;      map(2,5) = 0;
+	map(3,0) = 0;          map(3,1) = 0;     map(3,2) = 10;   map(3,3) = 0;           map(3,4) = 0;            map(3,5) = 0;
+	map(4,0) = 0.0480;     map(4,1) = 0;     map(4,2) = 0;    map(4,3) = 0.4952;      map(4,4) = 0.00863;       map(4,5) = 0;
+	map(5,0) = -0.0480;    map(5,1) = 0;     map(5,2) = 0;    map(5,3) = -0.4952;     map(5,4) = -0.00863;      map(5,5) = 0;
+
+	return map;
+}
 //========== omnirotor functions END ===========//
 
 MulticopterRateControl::MulticopterRateControl(bool vtol) :
@@ -109,6 +132,9 @@ MulticopterRateControl::parameters_updated()
 
 	//set filter parameters
 	pos_fork_filter.setParameters(0.04, 0.1);
+
+	//Joao getting PWM values here
+
 }
 
 float
@@ -155,6 +181,9 @@ MulticopterRateControl::Run()
 		updateParams();
 		parameters_updated();
 	}
+
+	//read the rc channels you need
+	_rc_channels_sub.update(&_rc_channels);
 
 	/* run controller on gyro changes */
 	vehicle_angular_velocity_s angular_velocity;
@@ -258,16 +287,6 @@ MulticopterRateControl::Run()
 				_thrust_sp = -v_rates_sp.thrust_body[2];
 			}
 		}
-		//==================================================================//
-		//============== here starts your main code/loop ===================//
-		//=== check your subscription here
-		//get update on dynamixels' position
-		// update_dynxl_pos();
-
-		//read the rc channels you need
-		_rc_channels_sub.update(&_rc_channels);
-		//put channel 8 value into debug vector
-		//_dynxls_d.x = _rc_channels.channels[5];
 
 		// run the rate controller
 		if (_v_control_mode.flag_control_rates_enabled && !_actuators_0_circuit_breaker_enabled) {
@@ -292,6 +311,156 @@ MulticopterRateControl::Run()
 			// run rate controller
 			// const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 			Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
+
+
+			// publish rate controller status
+			rate_ctrl_status_s rate_ctrl_status{};
+			_rate_control.getRateControlStatus(rate_ctrl_status);
+			rate_ctrl_status.timestamp = hrt_absolute_time();
+			_controller_status_pub.publish(rate_ctrl_status);
+
+			// publish actuator controls
+			actuator_controls_s actuators{};
+			actuators.control[actuator_controls_s::INDEX_ROLL] = PX4_ISFINITE(att_control(0)) ? att_control(0) : 0.0f;
+			actuators.control[actuator_controls_s::INDEX_PITCH] = PX4_ISFINITE(att_control(1)) ? att_control(1) : 0.0f;
+			actuators.control[actuator_controls_s::INDEX_YAW] = PX4_ISFINITE(att_control(2)) ? att_control(2) : 0.0f;
+			actuators.control[actuator_controls_s::INDEX_THROTTLE] = PX4_ISFINITE(_thrust_sp) ? _thrust_sp : 0.0f;
+			actuators.control[actuator_controls_s::INDEX_LANDING_GEAR] = (float)_landing_gear.landing_gear;
+			actuators.timestamp_sample = angular_velocity.timestamp_sample;
+
+			//** Joao does his custom mixer here **//
+			//make the mapping matrix and inverse it
+			matrix::Matrix<float, 6, 6> map;
+			map = make_map();
+
+			matrix::Vector<float, 6> in_v;
+			matrix::Vector<float, 6> out_v;
+
+			//get from att control directly
+			in_v(0) = math::constrain(att_control(0), -1.0f, 1.0f);
+			in_v(1) = math::constrain(att_control(1), -1.0f, 1.0f);
+			in_v(2) = math::constrain(att_control(2), -1.0f, 1.0f);
+			in_v(3) = -in_v(1);
+			in_v(4) = 0;
+			in_v(5) = math::constrain(-_thrust_sp, -1.0f, 1.0f);
+
+			//for debuging, get values from radio
+			// in_v(0) = math::constrain(_rc_channels.channels[1], -1.0f, 1.0f);
+			// in_v(1) = math::constrain(_rc_channels.channels[2], -1.0f, 1.0f);
+			// in_v(2) = math::constrain(_rc_channels.channels[3], -1.0f, 1.0f);
+			// in_v(3) = -in_v(1);
+			// in_v(4) = 0;
+			// in_v(5) = math::constrain(-_rc_channels.channels[0], -1.0f, 1.0f);
+
+			//get the preliminary outputs. Still needs to transform the first four values into the square of motor speeds of the remaining two motors
+			out_v = map*in_v;
+
+			//constrain the outputs
+			out_v(0) = math::constrain(out_v(0), -1.0f, 1.0f);
+			out_v(1) = math::constrain(out_v(1), -1.0f, 1.0f);
+			out_v(2) = math::constrain(out_v(2), -1.0f, 1.0f); //limit the torque on y by the coaxial
+			out_v(3) = math::constrain(out_v(3), -1.0f, 1.0f);
+			//the small motors can only receive positive commands
+			out_v(4) = math::constrain(out_v(4), 0.0f, 1.0f);
+			out_v(5) = math::constrain(out_v(5), 0.0f, 1.0f);
+
+			//output angle for the dynamixel (don't use torque because it can change direction here)
+			float T_y = 0;
+			float T_z = 0;
+
+			T_y = out_v(0);
+			T_z = out_v(1);
+
+			//prevents vibration from dynamixel at low throttles
+			if (in_v(5) < (float)0.25)
+			{
+				T_z = 0.3;
+			}
+			// angle_att_ctrl = atan2(T_y,T_z);
+			angle_att_ctrl = -atan(T_y/T_z);
+			// PX4_INFO("angle_att_ctrl: %8.4f", (double)angle_att_ctrl);
+
+			//calculate total torque and thrust of coaxial rotor
+			float N = out_v(1)/cos(angle_att_ctrl);
+			float M = out_v(3)/cos(angle_att_ctrl);
+
+			// //solve for coaxial motor commands
+			matrix::Vector<float, 2> w1_and_w2;
+			w1_and_w2(0) = -0.5f*N + 0.5f*M;
+			w1_and_w2(1) = -0.5f*N - 0.5f*M;
+
+			//constrain again
+			w1_and_w2(0) = math::constrain(w1_and_w2(0), 0.0f, 1.0f);
+			w1_and_w2(1) = math::constrain(w1_and_w2(1), 0.0f, 1.0f);
+
+			matrix::Vector<float, 4> out_temp;
+			out_temp(0) = w1_and_w2(0); //normalized command for upper coaxial
+			out_temp(1) = w1_and_w2(1); //normalized command for lower coaxial
+			out_temp(2) = out_v(4);   //normalized command for Left pitch motor (positive x axis)
+			out_temp(3) = out_v(5);   //normalized command for Right pitch motor (negative x axis)
+
+			//scale the outputs with the total thrust command, to prevent att compensatation at non-hovering throttle
+			for (size_t i = 0; i < 4; i++)
+			{
+				out_temp(i) = out_temp(i)*_thrust_sp;
+			}
+			angle_att_ctrl = angle_att_ctrl*_thrust_sp;
+
+
+			// out_temp(0) = out_v(0); //for debuging
+			// out_temp(1) = out_v(1); //for debuging
+			// out_temp(2) = out_v(4);   //for debuging
+			// out_temp(3) = out_v(5);   //for debuging
+
+			float max_coax = 2100;
+			float min_coax = 1100;
+			float max_small = 1900;
+			float min_small = 1050;
+
+			//get time values for armed and not armed
+			if (_v_control_mode.flag_armed)
+			{
+				last_armed_us = hrt_absolute_time();
+			}
+			else
+			{
+				last_not_armed_us = hrt_absolute_time();
+			}
+			uint32_t diff = last_armed_us - last_not_armed_us;
+			// PX4_INFO("angle_att_ctrl: %i", diff);
+
+
+			if (diff < delta_us && _v_control_mode.flag_armed)
+			{
+				_actuator_controls_6.control[0] = min_coax;
+				_actuator_controls_6.control[1] = min_coax;
+				_actuator_controls_6.control[2] = min_small;
+				_actuator_controls_6.control[3] = min_small;
+				angle_att_ctrl = 0;
+			}
+			else
+			{
+				//For coax
+				for (size_t i = 0; i < 2; i++)
+				{
+					_actuator_controls_6.control[i] = sqrt(out_temp(i)*2)*(max_coax - min_coax) + min_coax;
+				}
+				//For small rotors
+				for (size_t i = 2; i < 4; i++)
+				{
+					_actuator_controls_6.control[i] = sqrt(out_temp(i))*(max_small - min_small) + min_small;
+				}
+			}
+
+			//limit the output
+			_actuator_controls_6.control[0] = math::constrain(_actuator_controls_6.control[0], min_coax, max_coax);
+			_actuator_controls_6.control[1] = math::constrain(_actuator_controls_6.control[1], min_coax, max_coax);
+			_actuator_controls_6.control[2] = math::constrain(_actuator_controls_6.control[2], min_small, max_small);
+			_actuator_controls_6.control[3] = math::constrain(_actuator_controls_6.control[3], min_small, max_small);
+
+			//** Joao does his custom mixer here END **//
+
+			//** Joao does dynamixel control and select operational configuration here **//
 
 			if ((_rc_channels.channels[7] < (float)-0.5))
 			{
@@ -318,10 +487,6 @@ MulticopterRateControl::Run()
 			}
 			else
 			{
-				//ignore all rate control
-				att_control(0) = 0;
-				att_control(1) = 0;
-				att_control(2) = 0;
 
 				if ((_rc_channels.channels[7] > (float)-0.2) && (_rc_channels.channels[7] < (float)0.2))
 				{
@@ -382,25 +547,7 @@ MulticopterRateControl::Run()
 
 			//store the mode that runned this loop
 			mode_old = mode;
-
-		//==================================================================//
-		//============== here ENDS your main code/loop ===================//
-
-
-			// publish rate controller status
-			rate_ctrl_status_s rate_ctrl_status{};
-			_rate_control.getRateControlStatus(rate_ctrl_status);
-			rate_ctrl_status.timestamp = hrt_absolute_time();
-			_controller_status_pub.publish(rate_ctrl_status);
-
-			// publish actuator controls
-			actuator_controls_s actuators{};
-			actuators.control[actuator_controls_s::INDEX_ROLL] = PX4_ISFINITE(att_control(0)) ? att_control(0) : 0.0f;
-			actuators.control[actuator_controls_s::INDEX_PITCH] = PX4_ISFINITE(att_control(1)) ? att_control(1) : 0.0f;
-			actuators.control[actuator_controls_s::INDEX_YAW] = PX4_ISFINITE(att_control(2)) ? att_control(2) : 0.0f;
-			actuators.control[actuator_controls_s::INDEX_THROTTLE] = PX4_ISFINITE(_thrust_sp) ? _thrust_sp : 0.0f;
-			actuators.control[actuator_controls_s::INDEX_LANDING_GEAR] = (float)_landing_gear.landing_gear;
-			actuators.timestamp_sample = angular_velocity.timestamp_sample;
+			//** Joao does dynamixel control and select operational configuration here END**//
 
 			// scale effort by battery status if enabled
 			if (_param_mc_bat_scale_en.get()) {
@@ -421,6 +568,8 @@ MulticopterRateControl::Run()
 
 			actuators.timestamp = hrt_absolute_time();
 			_actuators_0_pub.publish(actuators);
+			_actuator_controls_6.timestamp = hrt_absolute_time();
+			_actuator_controls_6_pub.publish(_actuator_controls_6); //Joao's pub
 
 		} else if (_v_control_mode.flag_control_termination_enabled) {
 			if (!_vehicle_status.is_vtol) {
@@ -494,6 +643,7 @@ Vector3f MulticopterRateControl::torque_CG_map_inv(Vector3f Ce_ang_)
 	//invert the map
 	Matrix<float, 3, 3> map_cross_inv;
 	map_cross_inv = geninv(map_cross);
+	// map_cross_inv = map_cross;
 	//apply the inverse to the total desired torque
 	Vector3f T_dtal;
 	T_dtal = map_cross_inv*Ce_ang_;
@@ -571,23 +721,19 @@ Vector3f MulticopterRateControl::rotor_IK_no_sing(Vector3f T_d_)
 void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 {
 	//Do here the mapping to a desired thrust
-	Vector3f T_dtal;
-	T_dtal = torque_CG_map_inv(att_control_);
-	//Add the thrust on z direction
-	T_dtal(2) = T_dtal(2) - _thrust_sp - 17;
+	// Vector3f T_dtal;
+	// T_dtal = torque_CG_map_inv(att_control_);
+	// //Add the thrust on z direction
+	// T_dtal(2) = T_dtal(2) - _thrust_sp - 17;
 
-	//Do the IK for the rotor
-	Vector3f u;
-	u = rotor_IK_no_sing(T_dtal);
-
-	// _dynxls_d.timestamp = hrt_absolute_time();
-	// _debug_vect_pub.publish(_dynxls_d);
-
+	// //Do the IK for the rotor
+	// Vector3f u;
+	// u = rotor_IK_no_sing(T_dtal);
 
 	_dynxls_d.x = 0; //for not using the fork dof
 	_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
-	_dynxls_d.y = u(1) + (float)grd_mode_pos2_next_vertical;
-	_dynxls_d.z = u(2);
+	_dynxls_d.y = angle_att_ctrl + (float)grd_mode_pos2_next_vertical; //replace u(1) by angle_att_ctrl
+	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d);
 
@@ -596,24 +742,20 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 void MulticopterRateControl::hanging_ctrl(Vector3f att_control_)
 {
 	//Do here the mapping to a desired thrust
-	Vector3f T_dtal;
-	T_dtal = torque_CG_map_inv(att_control_);
-	//Add the thrust on z direction
-	T_dtal(2) = -T_dtal(2) - _thrust_sp - 17;
+	// Vector3f T_dtal;
+	// T_dtal = torque_CG_map_inv(att_control_);
+	// //Add the thrust on z direction
+	// T_dtal(2) = -T_dtal(2) - _thrust_sp - 17;
 
-	//Do the IK for the rotor
-	Vector3f u;
-	u = rotor_IK_no_sing(T_dtal);
+	// //Do the IK for the rotor
+	// Vector3f u;
+	// u = rotor_IK_no_sing(T_dtal);
 
-	// _dynxls_d.timestamp = hrt_absolute_time();
-	// _debug_vect_pub.publish(_dynxls_d);
-
-	// float MATH_PI = 3.1415;
 	//publish only if armed
 	_dynxls_d.x = 0; //for not using the fork dof
 	_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
-	_dynxls_d.y = -u(1) + (float)MATH_PI + (float)grd_mode_pos2_next_vertical;
-	_dynxls_d.z = u(2);
+	_dynxls_d.y = -angle_att_ctrl + (float)MATH_PI + (float)grd_mode_pos2_next_vertical; //replace u(1) by angle_att_ctrl
+	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d);
 

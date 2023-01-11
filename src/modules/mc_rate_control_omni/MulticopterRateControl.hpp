@@ -131,6 +131,7 @@ private:
 	uORB::Publication<vehicle_rates_setpoint_s>	_v_rates_sp_pub{ORB_ID(vehicle_rates_setpoint)};			/**< rate setpoint publication */
 	//========== omnirotor publications ===================//
 	uORB::Publication<debug_vect_s>			_debug_vect_pub{ORB_ID(debug_vect)};
+	uORB::Publication<actuator_controls_s>		_actuator_controls_6_pub{ORB_ID(actuator_controls_6)}; //I added this new id on the actuator_controls.msg
 	//========== omnirotor publications END ===============//
 
 	landing_gear_s 			_landing_gear{};
@@ -147,6 +148,7 @@ private:
 	double grd_mode_pos2_next_vertical = 0;
 	double dyxl_pos1_d = 0;
 	double dyxl_pos2_d = 0;
+	float angle_att_ctrl = 0;
 	int mode = 0; //1-inverted, 2-hanging, 3-restore, 4-free rotation
 	int mode_old = 0;
 	AlphaFilter<float> pos_fork_filter{};
@@ -154,6 +156,10 @@ private:
 	// vehicle_local_position_setpoint_s _local_pos_setpoint{};
 	vehicle_local_position_setpoint_s _local_pos_setpoint{};
 	vehicle_attitude_s vehicle_att{};
+	actuator_controls_s _actuator_controls_6{};
+	uint32_t delta_us = 1000000;
+	hrt_abstime last_not_armed_us;
+	hrt_abstime last_armed_us;
 	//========== omnirotor uORB msg structures END ===============//
 	//========== omnirotor functions ===================//
 	void update_dynxl_pos();
