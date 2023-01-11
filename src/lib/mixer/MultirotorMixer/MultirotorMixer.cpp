@@ -381,12 +381,6 @@ MultirotorMixer::mix(float *outputs, unsigned space)
 		break;
 	}
 
-	//**Joao doing some hack here**//
-	outputs[0] = 0.3;
-	outputs[1] = 0.3;
-	outputs[2] = 0.3;
-	outputs[3] = 0.3;
-
 	// Apply thrust model and scale outputs to range [idle_speed, 1].
 	// At this point the outputs are expected to be in [0, 1], but they can be outside, for example
 	// if a roll command exceeds the motor band limit.
