@@ -386,8 +386,11 @@ MulticopterRateControl::Run()
 
 			// //solve for coaxial motor commands
 			matrix::Vector<float, 2> w1_and_w2;
-			w1_and_w2(0) = -0.5f*N + 0.5f*M;
-			w1_and_w2(1) = -0.5f*N - 0.5f*M;
+			// w1_and_w2(0) = -0.5f*N + 0.5f*M;
+			// w1_and_w2(1) = -0.5f*N - 0.5f*M;
+
+			w1_and_w2(0) = -1.0f*N + 0.2f*M; //set the N coeficient to 1
+			w1_and_w2(1) = -1.0f*N - 0.2f*M;
 
 			//constrain again
 			w1_and_w2(0) = math::constrain(w1_and_w2(0), 0.0f, 1.0f);
@@ -443,7 +446,7 @@ MulticopterRateControl::Run()
 				//For coax
 				for (size_t i = 0; i < 2; i++)
 				{
-					_actuator_controls_6.control[i] = sqrt(out_temp(i)*2)*(max_coax - min_coax) + min_coax;
+					_actuator_controls_6.control[i] = sqrt(out_temp(i))*(max_coax - min_coax) + min_coax;
 				}
 				//For small rotors
 				for (size_t i = 2; i < 4; i++)

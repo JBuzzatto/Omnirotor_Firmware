@@ -493,14 +493,17 @@ void DynamixelSerial::run()
 		dynamixel.set_setpoints(1, dynx_1_raw, 0, OPMODE_EXT_POS_CONTROL);
 		dynamixel.set_setpoints(2, dynx_2_raw, 0, OPMODE_EXT_POS_CONTROL);
 
+		float gripper_pos_0 = 3.1415f*1.3f;
+		// float gripper_pos_act = _rc_channels.channels[4]*3.1415f*(-2);
+		float gripper_pos_act = 3.1415f*(3.7f);
 		//Controll the gripper (id = 3)
 		if (_rc_channels.channels[9] > (float)-0.1)
 		{
-			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(_rc_channels.channels[4]*3.1415f), 0, OPMODE_EXT_POS_CONTROL);
+			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(gripper_pos_act), 0, OPMODE_EXT_POS_CONTROL);
 		}
 		else
 		{
-			dynamixel.set_setpoints(3, 0, 0, OPMODE_EXT_POS_CONTROL);
+			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(gripper_pos_0), 0, OPMODE_EXT_POS_CONTROL);
 		}
 
 
