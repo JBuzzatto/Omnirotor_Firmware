@@ -69,6 +69,9 @@ sh /etc/init.d/rc.omni_options
 # set MAV_TYPE 2
 # param set MAV_TYPE ${MAV_TYPE}
 
+#for inverted flight, the board has +270 deg in row
+param set SENS_BOARD_ROT 20
+
 # This is the gimbal pass mixer
 set MIXER_AUX pass
 
