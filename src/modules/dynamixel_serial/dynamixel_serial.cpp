@@ -59,6 +59,12 @@
 #include <drivers/drv_hrt.h>
 #include <math.h>
 
+int count = 0;
+// bool flip_back = false;
+bool flip_front = false;
+float last_swtch_val = 0.0f;
+
+
 int32_t dyn_extpos_rad2raw(float rad)
 {
 	//dynamixel XM430 can go up to 256 turns for each side
@@ -493,18 +499,42 @@ void DynamixelSerial::run()
 		dynamixel.set_setpoints(1, dynx_1_raw, 0, OPMODE_EXT_POS_CONTROL);
 		dynamixel.set_setpoints(2, dynx_2_raw, 0, OPMODE_EXT_POS_CONTROL);
 
-		float gripper_pos_0 = 3.1415f*1.3f;
+		//For compression kirigami, normal gripper
+		// float gripper_pos_0 = 3.1415f*1.3f;
+		// float gripper_pos_act = 3.1415f*(3.7f);
+		//For compression kirigami, fast gripper
+		float current_swtch_val = _rc_channels.channels[9];
 		// float gripper_pos_act = _rc_channels.channels[4]*3.1415f*(-2);
-		float gripper_pos_act = 3.1415f*(3.7f);
-		//Controll the gripper (id = 3)
-		if (_rc_channels.channels[9] > (float)-0.1)
+		if (current_swtch_val - last_swtch_val > 0.3f)
 		{
-			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(gripper_pos_act), 0, OPMODE_EXT_POS_CONTROL);
+			flip_front = true;
 		}
 		else
 		{
-			dynamixel.set_setpoints(3, dyn_extpos_rad2raw(gripper_pos_0), 0, OPMODE_EXT_POS_CONTROL);
+			flip_front = false;
 		}
+
+		if (flip_front)
+		{
+			count++;
+		}
+
+		last_swtch_val = current_swtch_val;
+		// float gripper_pos_0 = 3.1415f*(2*3.7f)*(count-1);
+		float gripper_pos_act = 3.1415f*(2*2.7f)*count;
+
+		dynamixel.set_setpoints(3, dyn_extpos_rad2raw(gripper_pos_act), 0, OPMODE_EXT_POS_CONTROL);
+
+		// //Controll the gripper (id = 3)
+		// if (_rc_channels.channels[9] > (float)-0.1)
+		// {
+
+		// 	dynamixel.set_setpoints(3, dyn_extpos_rad2raw(gripper_pos_act), 0, OPMODE_EXT_POS_CONTROL);
+		// }
+		// else
+		// {
+		// 	dynamixel.set_setpoints(3, dyn_extpos_rad2raw(gripper_pos_0), 0, OPMODE_EXT_POS_CONTROL);
+		// }
 
 
 

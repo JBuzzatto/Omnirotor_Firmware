@@ -594,6 +594,21 @@ bool PWMOut::updateOutputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS],
 
 	//**Joao ends here**//
 
+	//**Joao starts here - fast gripper control of small servo**//
+	//uses output 5
+	float servo_disengage = 1680;
+	float servo_engage = 1430;
+	if (_rc_channels.channels[9] > (float)-0.1)
+	{
+		outputs[4] = servo_engage;
+	}
+	else
+	{
+		outputs[4] = servo_disengage;
+	}
+	// outputs[4] = _rc_channels.channels[10]*500 + 1500;
+
+	//**Joao ends here** - fast gripper control of small servo//
 
 
 	/* output to the servos */
