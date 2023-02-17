@@ -521,7 +521,7 @@ void DynamixelSerial::run()
 
 		last_swtch_val = current_swtch_val;
 		// float gripper_pos_0 = 3.1415f*(2*3.7f)*(count-1);
-		float gripper_pos_act = 3.1415f*(2*2.7f)*count;
+		float gripper_pos_act = 3.1415f*(2*3.5f)*count;
 
 		dynamixel.set_setpoints(3, dyn_extpos_rad2raw(gripper_pos_act), 0, OPMODE_EXT_POS_CONTROL);
 

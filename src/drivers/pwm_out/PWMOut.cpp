@@ -595,9 +595,10 @@ bool PWMOut::updateOutputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS],
 	//**Joao ends here**//
 
 	//**Joao starts here - fast gripper control of small servo**//
+	//sys_ctrl_alloc -> for enabling control allocation on qground control
 	//uses output 5
 	float servo_disengage = 1680;
-	float servo_engage = 1430;
+	float servo_engage = 1380;
 	if (_rc_channels.channels[9] > (float)-0.1)
 	{
 		outputs[4] = servo_engage;
