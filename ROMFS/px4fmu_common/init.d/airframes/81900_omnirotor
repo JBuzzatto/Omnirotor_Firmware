@@ -73,7 +73,7 @@ sh /etc/init.d/rc.omni_options
 param set SENS_BOARD_ROT 20
 
 # This is the gimbal pass mixer
-set MIXER_AUX pass
+set MIXER_AUX pass5
 
 # use PWM parameters for throttle channel
 # set PWM_AUX_OUT 45
