@@ -62,16 +62,44 @@ Matrix<float, 3, 3> skew_cross(Vector3f v)
 // float c_1 = 1;
 // float q_1 = 0.1;
 
-//put the mapping matrix here
+//put the mapping matrix here for omnirotor inverse flight
+// matrix::Matrix<float, 6, 6> make_map()
+// {
+// 	matrix::Matrix<float, 6, 6> map; //This is already the inverse, calculated in matlab.
+// 	map(0,0) = -0.1727;    map(0,1) = 0;     map(0,2) = 0;    map(0,3) = 0.0173;      map(0,4) = 0.9689;       map(0,5) = 0;
+// 	map(1,0) = 0;          map(1,1) = 0;     map(1,2) = 0;    map(1,3) = 0;           map(1,4) = 0;            map(1,5) = 1;
+// 	map(2,0) = -0.3358;    map(2,1) = 10;    map(2,2) = 0;    map(2,3) = -3.4664;     map(2,4) = -0.0604;      map(2,5) = 0;
+// 	map(3,0) = 0;          map(3,1) = 0;     map(3,2) = 10;   map(3,3) = 0;           map(3,4) = 0;            map(3,5) = 0;
+// 	map(4,0) = 0.0480;     map(4,1) = 0;     map(4,2) = 0;    map(4,3) = 0.4952;      map(4,4) = 0.00863;       map(4,5) = 0;
+// 	map(5,0) = -0.0480;    map(5,1) = 0;     map(5,2) = 0;    map(5,3) = -0.4952;     map(5,4) = -0.00863;      map(5,5) = 0;
+
+// 	return map;
+// }
+
+//put the mapping matrix here for omnirotor normal flight - old and probably wrong
+// matrix::Matrix<float, 6, 6> make_map()
+// {
+// 	matrix::Matrix<float, 6, 6> map; //This is already the inverse, calculated in matlab.
+// 	map(0,0) = 0.1727;     map(0,1) = 0;     map(0,2) = 0;    map(0,3) = -0.0173;     map(0,4) = 0.9689;       map(0,5) = 0;
+// 	map(1,0) = 0;          map(1,1) = 0;     map(1,2) = 0;    map(1,3) = 0;           map(1,4) = 0;            map(1,5) = 1;
+// 	map(2,0) = 0.3358;     map(2,1) = 10;    map(2,2) = 0;    map(2,3) = 3.4664;      map(2,4) = -0.0604;      map(2,5) = 0;
+// 	map(3,0) = 0;          map(3,1) = 0;     map(3,2) = 10;   map(3,3) = 0;           map(3,4) = 0;            map(3,5) = 0;
+// 	map(4,0) = 0.0480;     map(4,1) = 0;     map(4,2) = 0;    map(4,3) = 0.4952;      map(4,4) = -0.00863;     map(4,5) = 0;
+// 	map(5,0) = -0.0480;    map(5,1) = 0;     map(5,2) = 0;    map(5,3) = -0.4952;     map(5,4) = 0.00863;      map(5,5) = 0;
+
+// 	return map;
+// }
+
+//put the mapping matrix here for omnirotor normal flight - new
 matrix::Matrix<float, 6, 6> make_map()
 {
-	matrix::Matrix<float, 6, 6> map; //This is already the inverse, calculated in matlab. ignore the used of small rotors to control roll.
-	map(0,0) = -0.1727;    map(0,1) = 0;     map(0,2) = 0;    map(0,3) = 0.0173;      map(0,4) = 0.9689;       map(0,5) = 0;
-	map(1,0) = 0;          map(1,1) = 0;     map(1,2) = 0;    map(1,3) = 0;           map(1,4) = 0;            map(1,5) = 1;
-	map(2,0) = -0.3358;    map(2,1) = 10;    map(2,2) = 0;    map(2,3) = -3.4664;     map(2,4) = -0.0604;      map(2,5) = 0;
+	matrix::Matrix<float, 6, 6> map; //This is already the inverse, calculated in matlab.
+	map(0,0) = 0.1727;     map(0,1) = 0;     map(0,2) = 0;    map(0,3) = 0.0173;      map(0,4) = 0.9689;       map(0,5) = 0;
+	map(1,0) = 0;          map(1,1) = 0;     map(1,2) = 0;    map(1,3) = 0;           map(1,4) = 0;            map(1,5) = -1;
+	map(2,0) = -0.3358;    map(2,1) = 10;    map(2,2) = 0;    map(2,3) = 3.4664;      map(2,4) = 0.0604;       map(2,5) = 0;
 	map(3,0) = 0;          map(3,1) = 0;     map(3,2) = 10;   map(3,3) = 0;           map(3,4) = 0;            map(3,5) = 0;
-	map(4,0) = 0.0480;     map(4,1) = 0;     map(4,2) = 0;    map(4,3) = 0.4952;      map(4,4) = 0.00863;       map(4,5) = 0;
-	map(5,0) = -0.0480;    map(5,1) = 0;     map(5,2) = 0;    map(5,3) = -0.4952;     map(5,4) = -0.00863;      map(5,5) = 0;
+	map(4,0) = 0.0480;     map(4,1) = 0;     map(4,2) = 0;    map(4,3) = -0.4952;     map(4,4) = -0.00863;     map(4,5) = 0;
+	map(5,0) = -0.0480;    map(5,1) = 0;     map(5,2) = 0;    map(5,3) = 0.4952;      map(5,4) = 0.00863;      map(5,5) = 0;
 
 	return map;
 }
@@ -342,9 +370,9 @@ MulticopterRateControl::Run()
 			in_v(2) = math::constrain(att_control(2), -1.0f, 1.0f);
 			in_v(3) = -in_v(1);
 			in_v(4) = 0;
-			in_v(5) = math::constrain(-_thrust_sp, -1.0f, 1.0f);
+			in_v(5) = math::constrain(_thrust_sp, -1.0f, 1.0f);
 
-			//for debuging, get values from radio
+			// for debuging, get values from radio
 			// in_v(0) = math::constrain(_rc_channels.channels[1], -1.0f, 1.0f);
 			// in_v(1) = math::constrain(_rc_channels.channels[2], -1.0f, 1.0f);
 			// in_v(2) = math::constrain(_rc_channels.channels[3], -1.0f, 1.0f);
@@ -377,7 +405,7 @@ MulticopterRateControl::Run()
 				T_z = 0.3;
 			}
 			// angle_att_ctrl = atan2(T_y,T_z);
-			angle_att_ctrl = -atan(T_y/T_z);
+			angle_att_ctrl = atan(T_y/T_z);
 			// PX4_INFO("angle_att_ctrl: %8.4f", (double)angle_att_ctrl);
 
 			//calculate total torque and thrust of coaxial rotor
