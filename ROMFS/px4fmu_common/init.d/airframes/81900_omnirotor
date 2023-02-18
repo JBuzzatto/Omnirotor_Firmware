@@ -62,6 +62,9 @@ then
 
 fi
 
+#for inverted flight, the board has +90 deg in row
+param set SENS_BOARD_ROT 16
+
 #Set parameters on this file for omnirotor
 sh /etc/init.d/rc.omni_options
 
