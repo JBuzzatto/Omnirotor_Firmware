@@ -763,7 +763,7 @@ void MulticopterRateControl::inverted_ctrl(Vector3f att_control_)
 
 	_dynxls_d.x = 0; //for not using the fork dof
 	_dynxls_d.x = grd_mode_pos1_old; //for smooth integration with ground mode
-	_dynxls_d.y = angle_att_ctrl + (float)MATH_PI + (float)grd_mode_pos2_next_vertical; //replace u(1) by angle_att_ctrl
+	_dynxls_d.y = angle_att_ctrl + (float)grd_mode_pos2_next_vertical; //replace u(1) by angle_att_ctrl
 	_dynxls_d.z = 1;
 	_dynxls_d.timestamp = hrt_absolute_time();
 	_debug_vect_pub.publish(_dynxls_d);

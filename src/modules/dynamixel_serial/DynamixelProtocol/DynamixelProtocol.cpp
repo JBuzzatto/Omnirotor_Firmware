@@ -187,7 +187,9 @@ void DynamixelProtocol::configure_servos(void)
 	send_command(BROADCAST_ID, Reg::OPERATING_MODE, op_mode);
 
 	//For omnirotor. Set the homing offset for core
-	send_command(2, Reg::HOMING_OFFSET, -3941);
+	// send_command(2, Reg::HOMING_OFFSET, -3941);
+	//For omnirotor. Set the homing offset for core - in normal mode, rotate it 180 deg = 2048 difference
+	send_command(2, Reg::HOMING_OFFSET, -1893);
 
 	// enable torque control
 	send_command(BROADCAST_ID, Reg::TORQUE_ENABLE, 1);
