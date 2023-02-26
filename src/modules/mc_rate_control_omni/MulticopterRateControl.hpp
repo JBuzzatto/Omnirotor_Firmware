@@ -143,8 +143,8 @@ private:
 	debug_vect_s			_dynxls_d{};   //desired setpoint
 	double dyxl_pos1 = 0;
 	double dyxl_pos2 = 0;
-	double grd_mode_pos1_old = 0;
-	double pos2_old = 0;
+	float grd_mode_pos1_old = 0;
+	float pos2_old = 0;
 	double grd_mode_pos2_next_vertical = 0;
 	double dyxl_pos1_d = 0;
 	double dyxl_pos2_d = 0;

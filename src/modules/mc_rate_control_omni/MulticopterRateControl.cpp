@@ -780,7 +780,7 @@ void MulticopterRateControl::ground_restore(Vector3f att_control_)
 		theta_fork = 0;
 		// theta_core = 0;
 	}
-	grd_mode_pos1_old = grd_mode_pos1_old + (double)theta_fork*0.005; //Gravity following with a P controller
+	grd_mode_pos1_old = grd_mode_pos1_old + theta_fork*0.005f; //Gravity following with a P controller
 
 
 	_dynxls_d.x = 0; //for not using the fork dof
@@ -825,12 +825,12 @@ void MulticopterRateControl::ground_ctrl(Vector3f att_control_)
 	G_z = R.T()*Vector3f(0,0,1); //z vector for ground frame. Direction of gravity, as seen from the vehicle frame.
 	if (G_z(2) < 0)
 	{
-		grd_mode_pos1_old = (double)_rc_channels.channels[1]*0.01 + grd_mode_pos1_old;
+		grd_mode_pos1_old = _rc_channels.channels[1]*0.01f + grd_mode_pos1_old;
 		_dynxls_d.y = _rc_channels.channels[10]*(float)MATH_PI/(float)2.0 + (float)MATH_PI/(float)2.0 + _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
 	}
 	else
 	{
-		grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old; //keep radio input the same for both hanging and inverted pose
+		grd_mode_pos1_old = _rc_channels.channels[1]*-0.01f + grd_mode_pos1_old; //keep radio input the same for both hanging and inverted pose
 		_dynxls_d.y = _rc_channels.channels[10]*(float)MATH_PI/(float)2.0 + (float)MATH_PI/(float)2.0 - _rc_channels.channels[2]*(float)MATH_PI + (float)grd_mode_pos2_next_vertical;
 	}
 	_dynxls_d.x = grd_mode_pos1_old;
@@ -856,8 +856,8 @@ void MulticopterRateControl::ground_ctrl_position(Vector3f att_control_)
 void MulticopterRateControl::free_rotation_ctrl(Vector3f att_control_)
 {
 	// float MATH_PI = 3.1415;
-	grd_mode_pos1_old = (double)_rc_channels.channels[1]*-0.01 + grd_mode_pos1_old;
-	pos2_old = (double)_rc_channels.channels[2]*-0.01 + pos2_old;
+	grd_mode_pos1_old = _rc_channels.channels[1]*-0.01f + grd_mode_pos1_old;
+	pos2_old = _rc_channels.channels[2]*-0.01f + pos2_old;
 	_dynxls_d.x = grd_mode_pos1_old;
 	_dynxls_d.y = pos2_old;
 	_dynxls_d.z = 1;

@@ -468,6 +468,8 @@ void DynamixelSerial::run()
 	// initialize parameters
 	parameters_update(true);
 
+	float first = 0;
+
 	debug_vect_s flags_vect;
 	rc_channels_s _rc_channels;
 
@@ -479,7 +481,8 @@ void DynamixelSerial::run()
 
 		if (_debug_vect_sub.updated()) {
 
-			_debug_vect_sub.copy(&flags_vect);
+			// _debug_vect_sub.copy(&flags_vect);
+			_debug_vect_sub.update(&flags_vect);
 		}
 		if (_rc_channels_sub.updated()) {
 
@@ -491,13 +494,38 @@ void DynamixelSerial::run()
 		}
 
 		// dynamixel.set_setpoints(_servo_id_cmd, _val_cmd, _led_cmd, _mode_cmd); //Uncomment this if sending commands through console terminal
+		if ((_rc_channels.channels[7] < (float)-0.5))
+			{
+				//
+			}
+			else
+			{
+				if ((_rc_channels.channels[7] > (float)-0.2) && (_rc_channels.channels[7] < (float)0.2))
+				{
+					//
+				}
+				else
+				{
+					// free_rotation_ctrl(att_control);
+					// ground_ctrl(att_control);
+					// ground_ctrl_position(att_control);
+					first = _rc_channels.channels[1]*0.0035f + first; //ground control or free rotation
+				}
+			}
+
+
 
 		int32_t dynx_2_raw = dyn_extpos_rad2raw(flags_vect.y);
-		int32_t dynx_1_raw = dyn_extpos_rad2raw(flags_vect.x);
+		int32_t dynx_1_raw = dyn_extpos_rad2raw(first);
+		// int32_t dynx_1_raw = dyn_extpos_rad2raw(1.2);
 
 		//Apparently it has to be sent with the ids in order
 		dynamixel.set_setpoints(1, dynx_1_raw, 0, OPMODE_EXT_POS_CONTROL);
 		dynamixel.set_setpoints(2, dynx_2_raw, 0, OPMODE_EXT_POS_CONTROL);
+		// PX4_INFO("id = 1");
+		// PX4_INFO("send_command with value = %i", dynx_1_raw);
+		// PX4_INFO("id = 2");
+		// PX4_INFO("send_command with value = %i", dynx_2_raw);
 
 		//For compression kirigami, normal gripper
 		// float gripper_pos_0 = 3.1415f*1.3f;
