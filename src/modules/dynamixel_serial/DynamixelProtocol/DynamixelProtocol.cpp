@@ -66,7 +66,7 @@ void DynamixelProtocol::init(const int serial_uart, uint32_t serial_baud)
 	delay_time_us = 0;
 	pktbuf_ofs = 0;
 
-	op_mode = 4; //Joao changed this
+	op_mode = 3;
 }
 
 /*
@@ -368,11 +368,33 @@ bool DynamixelProtocol::update()
 	delay_time_us = 0;
 	bool flag = false;
 
+	//hack to make first dof work - Joao
+	switch (op_mode) {
+		case OPMODE_CURR_CONTROL:
+			send_command(1, Reg::GOAL_CURRENT, val_sp[0]);
+			//Applying high current to the motor for long period of time might damage the motor
+			break;
+
+		case OPMODE_EXT_POS_CONTROL:
+			send_command(1, Reg::GOAL_POSITION, val_sp[0]);
+			// PX4_INFO("id = %i", i + 1);
+			// PX4_INFO("send_command with value = %i", val_sp[i]);
+			break;
+
+		case OPMODE_POS_CONTROL:
+			send_command(1, Reg::GOAL_POSITION, val_sp[0]);
+			break;
+
+		case OPMODE_VEL_CONTROL:
+			send_command(1, Reg::GOAL_VELOCITY, val_sp[0]);
+			break;
+		}
+
 	// loop for all 16 channels
-	for (uint8_t i = 0; i < 4; i++) {
-		// if (((1U << i) & servo_mask) == 0) {
-		// 	continue;
-		// }
+	for (uint8_t i = 0; i < 16; i++) {
+		if (((1U << i) & servo_mask) == 0) {
+			continue;
+		}
 
 		if (broadcast) {
 
@@ -422,7 +444,6 @@ bool DynamixelProtocol::update()
 
 			send_command(i + 1, Reg::LED, led_sp[i]);
 		}
-
 		flag = true;
 	}
 

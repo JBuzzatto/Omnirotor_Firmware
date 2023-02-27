@@ -481,8 +481,8 @@ void DynamixelSerial::run()
 
 		if (_debug_vect_sub.updated()) {
 
-			// _debug_vect_sub.copy(&flags_vect);
-			_debug_vect_sub.update(&flags_vect);
+			_debug_vect_sub.copy(&flags_vect);
+			// _debug_vect_sub.update(&flags_vect);
 		}
 		if (_rc_channels_sub.updated()) {
 
